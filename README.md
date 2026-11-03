@@ -1,4 +1,4 @@
-# Horizon Byte People Portal
+# OMNA People Portal
 
 An interactive HR portal built on five n8n workflows.
 
