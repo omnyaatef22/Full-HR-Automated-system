@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Horizon Byte People Portal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Horizon Byte Solutions people portal: apply for a role, ask HR policy questions, and see the n8n automations that screen applications.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a horizon band (hero) over a stack of working panels; each panel is a real tool, not a description of one. Colors follow the HR emails the workflows already send. */
+:root{
+  --bg:#F2F4F8; --surface:#FFFFFF; --surface-2:#E9EDF4; --ink:#0D1828; --muted:#566275; --line:#D5DCE7;
+  --accent:#2350D8; --accent-ink:#FFFFFF; --accent-soft:#E2E9FD; --sun:#EE6A3A;
+  --ok:#047857; --ok-soft:#DCF2E9; --warn:#B45309; --warn-soft:#FCEED8; --bad:#B91C1C; --bad-soft:#FBE2E2; --slate:#4B5563; --slate-soft:#E7EAEF;
+  --code:#0F1B2C; --code-ink:#D8E1F0; --violet:#6D35D9; --violet-soft:#EEE7FD;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r:14px; --r-sm:9px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0A111B; --surface:#111A27; --surface-2:#182335; --ink:#E7ECF4; --muted:#93A0B3; --line:#26334A;
+  --accent:#7D9CFF; --accent-ink:#0A111B; --accent-soft:#1B2A50; --sun:#F58A5C;
+  --ok:#3CC293; --ok-soft:#0F3329; --warn:#F2A54C; --warn-soft:#3A2913; --bad:#F27777; --bad-soft:#3E1A1D; --slate:#A9B2BF; --slate-soft:#242C39;
+  --code:#060B12; --code-ink:#C9D5E8; --violet:#B697FF; --violet-soft:#2A1F4A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A111B; --surface:#111A27; --surface-2:#182335; --ink:#E7ECF4; --muted:#93A0B3; --line:#26334A;
+  --accent:#7D9CFF; --accent-ink:#0A111B; --accent-soft:#1B2A50; --sun:#F58A5C;
+  --ok:#3CC293; --ok-soft:#0F3329; --warn:#F2A54C; --warn-soft:#3A2913; --bad:#F27777; --bad-soft:#3E1A1D; --slate:#A9B2BF; --slate-soft:#242C39;
+  --code:#060B12; --code-ink:#C9D5E8; --violet:#B697FF; --violet-soft:#2A1F4A; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body);-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);line-height:1.08;margin:0;text-wrap:balance;letter-spacing:-.02em}
+h2{font-size:clamp(1.7rem,3.2vw,2.4rem);font-weight:800}
+h3{font-size:1.15rem;font-weight:700;letter-spacing:-.01em}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.eyebrow{font:500 .74rem/1 var(--f-mono);text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.mono{font-family:var(--f-mono)}
+.muted{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* top bar */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font:800 1.05rem/1 var(--f-display);letter-spacing:-.01em;white-space:nowrap}
+.brand svg{flex:none}
+.nav{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.nav a{padding:7px 11px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:500;font-size:.92rem;white-space:nowrap}
+.nav a:hover{color:var(--ink);background:var(--surface-2)}
+.nav a.on{color:var(--ink);background:var(--surface-2);font-weight:600}
+.navsep{width:1px;background:var(--line);margin:6px 6px}
+.iconbtn{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}
+@media (max-width:760px){.top .wrap{flex-wrap:wrap;row-gap:8px;padding-block:10px 8px}.nav{order:3;width:100%;margin-left:0;margin-inline:-6px}.brand{margin-right:auto}.brand .muted{display:none}#modePill{font-size:.68rem;padding:3px 8px}}
+
+/* hero */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);background:var(--surface)}
+.hero{min-height:calc(100vh - 62px)}
+.hero .wrap{position:relative;padding-block:clamp(40px,8vh,88px) 150px}
+.homewrap h1{max-width:16ch}
+.stages{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:36px;position:relative;z-index:1}
+.stage{position:relative;display:flex;flex-direction:column;gap:8px;padding:24px 22px 22px;border:1px solid var(--line);border-radius:18px;background:var(--bg);color:var(--ink);text-decoration:none;transition:transform .2s,border-color .2s,box-shadow .2s;overflow:hidden}
+.stage:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 18px 40px -26px rgba(13,24,40,.45)}
+.stage .num{position:absolute;right:16px;top:6px;font:800 4.6rem/1 var(--f-display);color:var(--line);letter-spacing:-.04em}
+.stage i{font-style:normal;font:500 .74rem/1 var(--f-mono);text-transform:uppercase;letter-spacing:.12em;color:var(--accent)}
+.stage b{font:700 1.35rem/1.15 var(--f-display);letter-spacing:-.015em;max-width:12ch;position:relative}
+.stage span{color:var(--muted);font-size:.93rem;position:relative}
+.stage em{font-style:normal;font-weight:600;color:var(--accent);margin-top:auto;padding-top:10px}
+.teamlink{display:inline-flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:22px;padding:10px 14px;border-radius:12px;border:1px dashed var(--line);color:var(--ink);text-decoration:none;font-size:.92rem;position:relative;z-index:1;background:var(--surface)}
+.teamlink:hover{border-color:var(--violet)}
+.pill.violet{background:var(--violet-soft);color:var(--violet)}
+.teamhead{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:start}
+.nextstep{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:24px;padding-top:18px;border-top:1px dashed var(--line)}
+@media (max-width:900px){.stages{grid-template-columns:1fr}.teamhead{grid-template-columns:1fr}.hero{min-height:0}}
+.hero canvas{position:absolute;inset:auto 0 0 0;width:100%;height:150px;pointer-events:none}
+.hero h1{font-size:clamp(2.3rem,5.4vw,4.1rem);font-weight:800;letter-spacing:-.035em}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero .lede{margin-top:16px;font-size:1.12rem;color:var(--muted);max-width:52ch}
+.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:30px;position:relative;z-index:1}
+.action{display:flex;flex-direction:column;gap:6px;padding:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);text-decoration:none;color:var(--ink);transition:transform .18s,border-color .18s}
+.action:hover{transform:translateY(-3px);border-color:var(--accent)}
+.action b{font:700 1.02rem/1.2 var(--f-display)}
+.action span{font-size:.88rem;color:var(--muted)}
+.action i{font-style:normal;font:500 .72rem/1 var(--f-mono);color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+.today{position:relative;z-index:1;align-self:start;min-width:0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:18px;box-shadow:0 12px 40px -24px rgba(13,24,40,.35)}
+.today header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px}
+.funnel{display:flex;flex-direction:column;gap:8px}
+.frow{display:grid;grid-template-columns:118px 1fr 34px;align-items:center;gap:10px;font-size:.9rem}
+.fbar{height:10px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.fbar span{display:block;height:100%;border-radius:inherit;transition:width .5s ease}
+.today footer{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;font-size:.85rem}
+
+
+/* sections */
+section.band{padding-block:64px}
+section.band + section.band{border-top:1px solid var(--line)}
+.sechead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:16px 32px;margin-bottom:28px}
+.sechead p{max-width:58ch;color:var(--muted);margin-top:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font:500 .74rem/1.3 var(--f-mono);letter-spacing:.02em;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.acc{background:var(--accent-soft);color:var(--accent)} .pill.slate{background:var(--slate-soft);color:var(--slate)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid transparent;background:var(--accent);color:var(--accent-ink);font-weight:600;cursor:pointer;text-decoration:none;transition:filter .15s,transform .15s}
+.btn:hover{filter:brightness(1.08)} .btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{background:var(--surface-2);filter:none}
+.btn.sm{padding:6px 11px;font-size:.86rem;border-radius:8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.note{font-size:.85rem;color:var(--muted)}
+
+/* prepare */
+.prep{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:16px;align-items:start}
+.prepform{padding:22px;display:flex;flex-direction:column;gap:14px}
+.agents{padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.orch{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:12px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+.orch b,.agent b{display:block;font-size:.95rem}
+.av{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font:600 .8rem/1 var(--f-mono);background:var(--surface-2);color:var(--muted);transition:.3s}
+.team{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;position:relative}
+.agent{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);transition:border-color .3s,transform .3s;min-width:0}
+.agent .note{font-size:.76rem}
+.agent .pill{align-self:start}
+.agent.work{border-color:var(--violet);transform:translateY(-3px)}
+.agent.work .av{background:var(--violet);color:#fff}
+.agent.done .av{background:var(--violet-soft);color:var(--violet)}
+.summary{display:grid;grid-template-columns:auto 1fr;gap:18px;padding:16px;border-radius:12px;border:1px solid var(--line);background:var(--bg)}
+.summary ul{margin:4px 0 0;padding-left:18px;font-size:.9rem}
+.summary .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;min-width:0}
+.kw{display:flex;flex-wrap:wrap;gap:6px}
+.sent{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--violet-soft);color:var(--ink)}
+.sent .btn{margin-left:auto}
+@media (max-width:980px){.prep{grid-template-columns:1fr}}
+@media (max-width:620px){.team{grid-template-columns:1fr}.summary{grid-template-columns:1fr}.summary .cols{grid-template-columns:1fr}.actions{grid-template-columns:1fr}}
+
+/* roles */
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.role{display:flex;flex-direction:column;gap:14px;padding:22px}
+.role .meta{display:flex;gap:8px;flex-wrap:wrap}
+.role ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
+.role li{display:grid;grid-template-columns:14px 1fr;gap:8px}
+.role li::before{content:"";width:6px;height:6px;margin-top:9px;border-radius:2px;background:var(--accent)}
+.role li.nice::before{background:transparent;border:1.5px solid var(--muted)}
+.role .go{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:960px){.roles{grid-template-columns:1fr}}
+
+/* apply */
+.apply{display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden}
+.apply form{padding:26px;display:flex;flex-direction:column;gap:14px;border-right:1px solid var(--line)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:600;font-size:.92rem}
+.field label small{font-weight:400;color:var(--muted)}
+input[type=text],input[type=email],select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea{min-height:84px;resize:vertical}
+.drop{display:flex;align-items:center;gap:12px;padding:14px;border:1.5px dashed var(--line);border-radius:10px;background:var(--bg);cursor:pointer}
+.drop:hover,.drop.over{border-color:var(--accent)}
+.drop input{position:absolute;width:1px;height:1px;opacity:0}
+.drop b{display:block;font-size:.92rem}
+.formout{padding:26px;display:flex;flex-direction:column;gap:16px;background:var(--bg);min-width:0}
+.screen{border-radius:12px;background:var(--surface);border:1px solid var(--line);padding:22px}
+.screen h3{font-size:1.35rem;margin-bottom:8px}
+.screen ul{margin:8px 0 0;padding-left:18px}
+.journey{display:flex;flex-direction:column;gap:0;margin:0;padding:0;list-style:none}
+.journey li{display:grid;grid-template-columns:22px 1fr;gap:12px;padding-bottom:14px;position:relative}
+.journey li::before{content:"";position:absolute;left:10px;top:20px;bottom:0;width:2px;background:var(--line)}
+.journey li:last-child::before{display:none}
+.journey .n{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;font:600 .7rem/1 var(--f-mono);color:var(--muted)}
+.journey li.on .n{border-color:var(--accent);color:var(--accent)}
+.journey li.done .n{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.journey b{display:block;font-size:.95rem}
+.journey span{font-size:.86rem;color:var(--muted)}
+@media (max-width:860px){.apply{grid-template-columns:1fr}.apply form{border-right:0;border-bottom:1px solid var(--line)}}
+
+/* screening lab */
+.lab{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start}
+.sheet{overflow:hidden}
+.sheethead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.sheethead .t{display:flex;align-items:center;gap:10px;font-weight:600}
+.tablebox{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+th{font:500 .7rem/1 var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:var(--surface-2);position:sticky;top:0}
+tbody tr{cursor:pointer;transition:background .15s}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr.sel{background:var(--accent-soft)}
+tbody tr.flash{animation:flash 1.2s ease}
+@keyframes flash{0%{background:var(--warn-soft)}100%{background:transparent}}
+td .sub{display:block;font-size:.78rem;color:var(--muted)}
+.trace{display:flex;flex-direction:column;min-height:100%}
+.trace header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.log{list-style:none;margin:0;padding:10px 0;max-height:440px;overflow:auto;background:var(--code);color:var(--code-ink);border-radius:0 0 var(--r) var(--r);font:400 .8rem/1.45 var(--f-mono);min-height:260px}
+.log li{display:grid;grid-template-columns:16px 1fr;gap:8px;padding:3px 14px;animation:in .25s ease both}
+.log li .k{color:#fff;font-weight:500}
+:root[data-theme="light"] .log li .k{color:#fff}
+.log li .v{color:#8FA3C2}
+.log li i{font-style:normal;width:8px;height:8px;border-radius:50%;margin-top:6px;background:#5B7BD8}
+.log li.ok i{background:#3CC293} .log li.warn i{background:#F2A54C} .log li.bad i{background:#F27777} .log li.head{padding-top:10px} .log li.head .k{color:#F58A5C}
+.log .empty{padding:14px;color:#8FA3C2}
+@keyframes in{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+.result{margin-top:16px;padding:22px;display:grid;grid-template-columns:auto 1fr;gap:22px}
+.dial{width:132px;height:132px;position:relative}
+.dial svg{width:100%;height:100%;transform:rotate(-90deg)}
+.dial .num{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.dial .num b{font:800 2.2rem/1 var(--f-display)}
+.dial .num small{display:block;font:500 .68rem/1 var(--f-mono);color:var(--muted);margin-top:4px}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px;min-width:0}
+.rgrid h4{margin:0 0 6px;font:500 .72rem/1 var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.rgrid ul{margin:0;padding-left:18px;font-size:.9rem}
+.rgrid .full{grid-column:1/-1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.outbox{display:flex;flex-wrap:wrap;gap:8px}
+.mail{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:.86rem;text-align:left}
+.mail:hover{border-color:var(--accent)}
+.mail .sw{width:10px;height:10px;border-radius:3px;flex:none}
+@media (max-width:980px){.lab{grid-template-columns:1fr}.result{grid-template-columns:1fr}.rgrid{grid-template-columns:1fr}}
+
+/* chat */
+.ask{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.chat{display:flex;flex-direction:column;height:560px;overflow:hidden}
+.chat header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.msgs{flex:1;overflow:auto;padding:18px 16px;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
+.msg{max-width:84%;padding:11px 14px;border-radius:14px;font-size:.94rem;line-height:1.5}
+.msg.me{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.bot ul{margin:4px 0;padding-left:18px}
+.msg .src{display:block;margin-top:6px;font:500 .74rem/1.3 var(--f-mono);color:var(--muted)}
+.typing{display:inline-flex;gap:4px}.typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:b 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,100%{opacity:.3}50%{opacity:1}}
+.suggest{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px 0;background:var(--surface)}
+.suggest button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:5px 11px;font-size:.82rem;cursor:pointer}
+.suggest button:hover{border-color:var(--accent);color:var(--accent)}
+.composer{display:flex;gap:8px;padding:12px 16px 16px;background:var(--surface)}
+.composer input{flex:1;min-width:0}
+.kb{padding:18px;display:flex;flex-direction:column;gap:12px}
+.doc{display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.doc .ic{width:36px;height:44px;border-radius:6px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;font:600 .62rem/1 var(--f-mono);color:var(--accent)}
+.doc b{font-size:.92rem;display:block}
+.doc span{font-size:.8rem;color:var(--muted)}
+.hits{display:flex;flex-direction:column;gap:8px}
+.hit{padding:10px 12px;border-radius:10px;background:var(--surface-2);font-size:.84rem}
+.hit header{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;font:500 .74rem/1.2 var(--f-mono);color:var(--muted)}
+.hit mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 2px}
+.simbar{height:4px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}.simbar span{display:block;height:100%;background:var(--accent)}
+@media (max-width:900px){.ask{grid-template-columns:1fr}.chat{height:520px}}
+
+/* health */
+.health{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.hcard{padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.hcard .row{display:flex;gap:8px;flex-wrap:wrap}
+.classified{border-radius:10px;padding:12px 14px;background:var(--bg);border:1px solid var(--line);font-size:.88rem;display:flex;flex-direction:column;gap:6px}
+.classified .fix{padding:8px 10px;border-radius:8px;background:var(--warn-soft)}
+.errlog{grid-column:1/-1}
+.clock{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:var(--surface-2);font:500 .82rem/1 var(--f-mono)}
+.heart{display:flex;align-items:center;gap:14px;padding:14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+.heart svg{flex:none}
+.heart.stuck{border-color:var(--warn);background:var(--warn-soft)}
+.pulse{animation:pulse 1.4s ease-in-out infinite;transform-origin:center}
+@keyframes pulse{0%,100%{transform:scale(1)}15%{transform:scale(1.15)}30%{transform:scale(1)}}
+@media (max-width:980px){.health{grid-template-columns:1fr}}
+
+/* explorer */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tab{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500;font-size:.9rem}
+.tab[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.explorer{display:grid;grid-template-columns:minmax(0,1fr) 300px;overflow:hidden}
+.canvas{overflow:auto;background-color:var(--bg);background-image:radial-gradient(var(--line) 1px,transparent 1.2px);background-size:20px 20px;min-height:420px;max-height:620px;border-right:1px solid var(--line)}
+.canvas svg{display:block}
+.node{cursor:pointer}
+.node rect.box{fill:var(--surface);stroke:var(--line);stroke-width:1.2;transition:stroke .15s}
+.node:hover rect.box,.node.sel rect.box{stroke:var(--accent);stroke-width:2}
+.node text{fill:var(--ink);font:500 11.5px var(--f-body)}
+.node text.ty{fill:var(--muted);font:400 9.5px var(--f-mono)}
+.node .gl{font:600 9px var(--f-mono)}
+.edge{fill:none;stroke:var(--muted);stroke-width:1.4;opacity:.55}
+.edge.ai{stroke-dasharray:4 4;opacity:.45}
+.elab{fill:var(--muted);font:500 9px var(--f-mono)}
+.inspect{padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.inspect .tags{display:flex;gap:6px;flex-wrap:wrap}
+@media (max-width:900px){.explorer{grid-template-columns:1fr}.canvas{border-right:0;border-bottom:1px solid var(--line)}}
+
+/* dialog */
+dialog{border:0;padding:0;border-radius:16px;max-width:min(680px,calc(100vw - 32px));width:100%;background:var(--surface);color:var(--ink);box-shadow:0 30px 80px -20px rgba(0,0,0,.45)}
+dialog::backdrop{background:rgba(8,14,24,.55)}
+.dlghead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.dlghead .sub{font-size:.85rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.dlgbody{max-height:70vh;overflow:auto;background:#F4F5F7}
+.dlgbody .em{color:#1f2937}
+
+footer.site{padding-block:40px;border-top:1px solid var(--line);background:var(--surface)}
+footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center}
+.stack{display:flex;flex-wrap:wrap;gap:6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);opacity:0;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.9rem;transition:.25s;z-index:20;pointer-events:none;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="Horizon Byte People Portal">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="18" r="8" fill="var(--sun)"/><rect x="3" y="18" width="24" height="9" fill="var(--surface)"/><path d="M3 18.5h24" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round"/><path d="M8 22.5h14M11 26h8" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" opacity=".45"/></svg>
+      Horizon Byte <span class="muted" style="font-weight:500">People</span>
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#home" data-nav="home">Home</a><a href="#ask" data-nav="ask">Ask</a><a href="#prepare" data-nav="prepare">Prepare</a><a href="#apply" data-nav="apply">Apply</a><span class="navsep" aria-hidden="true"></span><a href="#team" data-nav="team">HR team</a><a href="#workflows" data-nav="workflows">Workflows</a>
+    </nav>
+    <span id="modePill" class="pill"><span class="dot"></span><span>Demo mode</span></span>
+    <button class="iconbtn" id="themeBtn" type="button" aria-label="Switch light or dark theme">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero" data-view="home">
+  <canvas id="horizon" aria-hidden="true"></canvas>
+  <div class="wrap homewrap">
+    <div class="eyebrow">Horizon Byte Solutions · Careers &amp; HR</div>
+    <h1 style="margin-top:14px">Hello! What would you like to do today?</h1>
+    <p class="lede">Choose a stage. You can start anywhere: ask a question, get coached, or apply straight away.</p>
+    <div class="stages">
+      <a class="stage" href="#ask"><span class="num">1</span><i>Ask</i><b>Ask HR a question</b><span>Leave, remote work, expenses, working hours. Every answer names the policy it comes from.</span><em>Start chatting →</em></a>
+      <a class="stage" href="#prepare"><span class="num">2</span><i>Prepare</i><b>Get coached for a job</b><span>Your match score, strengths and gaps on screen; a cover letter and interview answers by email.</span><em>Get my report →</em></a>
+      <a class="stage" href="#apply"><span class="num">3</span><i>Apply</i><b>Apply for a role</b><span>Three open positions. Upload a PDF CV and hear back by email within 48 hours.</span><em>See open roles →</em></a>
+    </div>
+    <a class="teamlink" href="#team"><span class="pill violet">For the HR team</span><span>Recruiter agent, screening sheet and system health</span><span aria-hidden="true">→</span></a>
+  </div>
+</section>
+
+<section class="band" id="team" data-view="team" style="background:var(--surface)">
+  <div class="wrap teamhead">
+    <div><div class="eyebrow">Horizon Byte · HR team</div><h2 style="margin-top:10px">Recruiter agent</h2>
+    <p class="muted" style="margin-top:10px;max-width:58ch">Every hour the recruiter agent reads new applications, scores each CV against the role and emails the result. Doubtful evaluations go to a person instead of the candidate.</p></div>
+    <aside class="today" aria-label="Recruitment pipeline today">
+      <header><h3>Applications pipeline</h3><span class="clock tnum" title="Demo clock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="clockTop">09:00</span></span></header>
+      <div class="funnel" id="funnel"></div>
+      <footer><span class="muted" id="lastRun">Next batch at 10:00</span><a class="btn sm" href="#screening">Open the sheet</a></footer>
+    </aside>
+  </div>
+</section>
+
+<!-- PREPARE -->
+<section class="band" id="prepare" data-view="prepare">
+  <div class="wrap">
+    <div class="sechead">
+      <div><div class="eyebrow">Step 2 · Prepare · Job Application Coach</div><h2 style="margin-top:10px">Get ready before you apply</h2>
+      <p>Paste a job post and your CV. A career-coach agent runs three specialists in order: CV Matcher, Cover Letter Writer and Interview Coach. You see the summary here; the detailed report goes to your inbox.</p></div>
+    </div>
+    <div class="prep">
+      <form class="panel prepform" id="prepForm" novalidate>
+        <p id="liveCoach" class="note" hidden></p>
+        <div class="field"><label for="pName">Your Name</label><input id="pName" type="text" autocomplete="name" placeholder="First and last name"></div>
+        <div class="field"><label for="pEmail">Your Email</label><input id="pEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+        <div class="field"><label for="pJob">Job Description <small>start from an open role or paste any job post</small></label>
+          <div class="chips" id="pJobPick" style="margin-bottom:4px"></div>
+          <textarea id="pJob" style="min-height:120px" placeholder="Paste the full job post here"></textarea></div>
+        <div class="field"><span style="font-weight:600;font-size:.92rem">Your CV <small class="muted">(PDF)</small></span>
+          <label class="drop" for="pCv"><svg width="22" height="26" viewBox="0 0 28 34" aria-hidden="true"><path d="M2 2h16l8 8v22H2z" fill="none" stroke="var(--muted)" stroke-width="2"/><path d="M18 2v8h8" fill="none" stroke="var(--muted)" stroke-width="2"/></svg>
+            <span><b id="pCvName">Choose your CV</b><span class="note" id="pCvMeta">Read in your browser only.</span></span><input id="pCv" type="file" accept=".pdf,application/pdf"></label></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">Coach me</button><button class="btn ghost" type="button" id="pSample">Use sample CV</button></div>
+      </form>
+      <div class="panel agents" id="agents">
+        <div class="orch"><div class="av" style="background:var(--violet-soft);color:var(--violet)">CC</div><div><b>Career Coach</b><span class="note">Orchestrator · GPT-4.1 mini</span></div><span class="pill" id="orchState">waiting</span></div>
+        <div class="team">
+          <div class="agent" data-a="0"><div class="av">CM</div><b>CV Matcher</b><span class="note">Score, strengths, gaps · GPT-5 mini</span><span class="pill">idle</span></div>
+          <div class="agent" data-a="1"><div class="av">CL</div><b>Cover Letter Writer</b><span class="note">Tailored letter · GPT-4 Turbo</span><span class="pill">idle</span></div>
+          <div class="agent" data-a="2"><div class="av">IC</div><b>Interview Coach</b><span class="note">5 questions + answers · GPT-4 Turbo</span><span class="pill">idle</span></div>
+        </div>
+        <div id="prepOut"><p class="note">Fill in the form, or press “Use sample CV” and pick a role, then “Coach me”.</p></div>
+      </div>
+    </div>
+    <div class="nextstep"><span class="muted">Next step</span><a class="btn ghost" href="#apply">Apply for a role →</a></div>
+  </div>
+</section>
+
+<!-- ASK HR -->
+<section class="band" id="ask" data-view="ask">
+  <div class="wrap">
+    <div class="sechead">
+      <div><div class="eyebrow">Step 1 · Ask · HR Policy Assistant</div><h2 style="margin-top:10px">Ask HR</h2>
+      <p>Answers come only from the policy documents, with numbers quoted exactly and the source named. If the policies don't cover it, the assistant says so and points you to HR.</p></div>
+    </div>
+    <div class="ask">
+      <div class="panel chat">
+        <header><b>HR Policy Assistant</b><span class="pill" id="chatMode"><span class="dot"></span>Sample policies</span></header>
+        <div class="msgs" id="msgs" aria-live="polite"></div>
+        <div class="suggest" id="suggest"></div>
+        <form class="composer" id="chatForm"><label for="chatIn" class="muted" style="position:absolute;left:-9999px">Your question</label><input id="chatIn" type="text" placeholder="How many leave days do I get?" autocomplete="off"><button class="btn" type="submit">Ask</button></form>
+      </div>
+      <div class="panel kb">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b>Knowledge base</b><span class="pill mono" id="chunkCount">0 chunks</span></div>
+        <div id="docs" style="display:flex;flex-direction:column;gap:8px"></div>
+        <label class="btn ghost sm" for="policyFile" style="align-self:start">Add a .txt policy</label>
+        <input id="policyFile" type="file" accept=".txt,text/plain" hidden>
+        <a class="btn ghost sm" id="policyLive" hidden target="_blank" rel="noopener" style="align-self:start">Upload policies to n8n</a>
+        <div style="border-top:1px dashed var(--line);padding-top:12px"><div class="eyebrow" style="margin-bottom:8px">Retrieved for the last question</div><div class="hits" id="hits"><p class="note">Ask something to see which chunks the assistant reads before answering.</p></div></div>
+      </div>
+    </div>
+    <div class="nextstep"><span class="muted">Next step</span><a class="btn ghost" href="#prepare">Prepare for a job →</a><a class="btn ghost" href="#apply">Go straight to applying →</a></div>
+  </div>
+</section>
+
+<!-- OPEN ROLES + APPLY -->
+<section class="band" id="roles" data-view="apply">
+  <div class="wrap">
+    <div class="sechead">
+      <div><div class="eyebrow">Step 3 · Apply</div><h2 style="margin-top:10px">Open roles</h2>
+      <p>These requirements are the exact text the screening model scores against. Must-haves are filled squares; nice-to-haves are outlined.</p></div>
+    </div>
+    <div class="roles" id="rolesGrid"></div>
+
+    <div class="panel apply" id="applyPanel" style="margin-top:28px">
+      <form id="applyForm" novalidate>
+        <div><div class="eyebrow">Recruitment 1 · Intake</div><h3 style="margin-top:8px;font-size:1.5rem">Join Horizon Byte Solutions</h3>
+        <p class="muted" style="margin-top:6px">Apply in one minute. Upload your CV as a PDF and we will get back to you by email within 48 hours.</p></div>
+        <p id="liveApply" class="note" hidden></p>
+        <div class="field"><label for="fName">Full Name</label><input id="fName" type="text" autocomplete="name" placeholder="First and last name"></div>
+        <div class="field"><label for="fEmail">Email</label><input id="fEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+        <div class="field"><label for="fPos">Position</label><select id="fPos"></select></div>
+        <div class="field"><span style="font-weight:600;font-size:.92rem">CV <small class="muted">(PDF, under 5 MB)</small></span>
+          <label class="drop" id="drop" for="fCv">
+            <svg width="28" height="34" viewBox="0 0 28 34" aria-hidden="true"><path d="M2 2h16l8 8v22H2z" fill="none" stroke="var(--muted)" stroke-width="2"/><path d="M18 2v8h8" fill="none" stroke="var(--muted)" stroke-width="2"/><text x="14" y="25" text-anchor="middle" font-size="7" font-family="monospace" fill="var(--accent)">PDF</text></svg>
+            <span><b id="cvName">Choose or drop your CV</b><span class="note" id="cvMeta">We read it in your browser for the demo. Nothing is uploaded.</span></span>
+            <input id="fCv" type="file" accept=".pdf,application/pdf">
+          </label>
+        </div>
+        <div class="field"><label for="fWhy">Why do you want this job? <small>Optional, 2-3 sentences</small></label><textarea id="fWhy" maxlength="1600"></textarea></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn" type="submit">Submit application</button><button class="btn ghost" type="button" id="fillSample">Fill with a sample</button></div>
+      </form>
+      <div class="formout" id="formOut" aria-live="polite">
+        <div class="eyebrow">What happens next</div>
+        <ol class="journey" id="journey">
+          <li><span class="n">1</span><div><b>Checked on arrival</b><span>Name, email, position and a real PDF between 500 bytes and 5 MB. Duplicates for the same role are caught.</span></div></li>
+          <li><span class="n">2</span><div><b>CV saved to Drive, logged in the sheet</b><span>Your row starts with Status “new”.</span></div></li>
+          <li><span class="n">3</span><div><b>Screened within the hour</b><span>Text is read from the PDF (or OCR'd if it's a scan), a profile is extracted, and a model scores it against the role.</span></div></li>
+          <li><span class="n">4</span><div><b>You hear back by email</b><span>Interview invitation, or a polite decline. Borderline cases go to a person first.</span></div></li>
+        </ol>
+        <div id="screenOut"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENING LAB -->
+<section class="band" id="screening" data-view="team">
+  <div class="wrap">
+    <div class="sechead">
+      <div><div class="eyebrow">Recruiter agent · Batch evaluation</div><h2 style="margin-top:10px">Screening, step by step</h2>
+      <p>The Applications sheet below holds sample candidates, plus anyone who applied in the Apply stage. Run the batch to watch each one move through the real workflow, including the guardrail that sends doubtful evaluations to a person.</p></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="runBatch" type="button">Run Batch Now</button><button class="btn ghost" id="resetLab" type="button">Reset sample data</button></div>
+    </div>
+    <div class="lab">
+      <div class="panel sheet">
+        <div class="sheethead"><div class="t"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="2" width="18" height="20" rx="2" fill="var(--ok)"/><path d="M7 8h10M7 12h10M7 16h10M12 8v8" stroke="#fff" stroke-width="1.6"/></svg>Applications</div><span class="note">Sample candidates are fictional. Select a row to see its evaluation.</span></div>
+        <div class="tablebox"><table><thead><tr><th>Applied</th><th>Name</th><th>Position</th><th>Status</th><th class="tnum">Score</th><th>Read</th></tr></thead><tbody id="sheetBody"></tbody></table></div>
+      </div>
+      <div class="panel trace">
+        <header><b>Execution log</b><span class="pill" id="execState">idle</span></header>
+        <ol class="log" id="log"><li class="empty" style="display:block">Press “Run Batch Now” to process every application with Status “new”.</li></ol>
+      </div>
+    </div>
+    <div class="panel result" id="result" hidden></div>
+  </div>
+</section>
+
+<!-- HEALTH -->
+<section class="band" id="health" data-view="team" style="background:var(--surface)">
+  <div class="wrap">
+    <div class="sechead">
+      <div><div class="eyebrow">Recruitment 3 · Error handler</div><h2 style="margin-top:10px">System health</h2>
+      <p>When a workflow breaks, the error is classified, logged and throttled so HR gets one email per problem per hour. A heartbeat also catches the failure no error can report: a queue that silently stopped moving.</p></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="clock tnum"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Demo clock <span id="clockH">09:00</span></span><button class="btn ghost sm" id="adv" type="button">Advance 1 hour</button></div>
+    </div>
+    <div class="health">
+      <div class="panel hcard">
+        <h3>Break something</h3>
+        <p class="note">Pick a failure and the workflow it hits. The classifier rules are the ones in the workflow.</p>
+        <div class="chips" id="errPresets"></div>
+        <div class="field"><label for="errMsg">Error message</label><input id="errMsg" type="text"></div>
+        <div class="field"><label for="errWf">Failed workflow</label><select id="errWf"><option>Recruitment 2 - Batch Evaluation (AI Screening)</option><option>Recruitment 1 - Intake (Form to Drive)</option></select></div>
+        <button class="btn" id="fire" type="button">Trigger error</button>
+        <div id="classOut"></div>
+      </div>
+      <div class="panel hcard">
+        <h3>Heartbeat</h3>
+        <p class="note">Every 2 hours: is anything waiting in Status “new” for more than 3 hours?</p>
+        <div class="heart" id="heart"></div>
+        <button class="btn ghost" id="beat" type="button">Run heartbeat check</button>
+        <p class="note">Tip: advance the clock a few hours without running the batch.</p>
+      </div>
+      <div class="panel hcard">
+        <h3>8 AM digest</h3>
+        <p class="note">One morning summary of the last 24 hours and every problem still open.</p>
+        <div class="classified" id="digestSum"></div>
+        <button class="btn ghost" id="digest" type="button">Build today's digest</button>
+      </div>
+      <div class="panel errlog sheet">
+        <div class="sheethead"><div class="t"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="2" width="18" height="20" rx="2" fill="var(--bad)"/><path d="M7 8h10M7 12h10M7 16h10" stroke="#fff" stroke-width="1.6"/></svg>Error Log</div><span class="note">Mark a problem resolved once it's fixed.</span></div>
+        <div class="tablebox"><table><thead><tr><th>Time</th><th>Workflow</th><th>Node</th><th>Type</th><th>Severity</th><th>Alerted</th><th>Status</th></tr></thead><tbody id="errBody"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WORKFLOWS -->
+<section class="band" id="workflows" data-view="workflows">
+  <div class="wrap">
+    <div class="sechead">
+      <div><div class="eyebrow">Under the hood</div><h2 style="margin-top:10px">The five workflows</h2>
+      <p>Drawn from the exported n8n files, node for node. Click any node to see what it does. Downloads have credentials, sheet IDs and email addresses removed.</p></div>
+    </div>
+    <div class="tabs" role="tablist" id="wfTabs"></div>
+    <div class="panel explorer">
+      <div class="canvas" id="canvas"></div>
+      <div class="inspect" id="inspect"></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div><b style="font-family:var(--f-display)">Built with n8n by Omneya</b><p class="note" style="margin-top:4px">Horizon Byte Solutions is a demo company. Sample candidates and policies are fictional.</p></div>
+    <div class="stack"><span class="pill">n8n</span><span class="pill">Groq gpt-oss</span><span class="pill">Gemini</span><span class="pill">GPT-5 mini</span><span class="pill">Google Sheets</span><span class="pill">Google Drive</span><span class="pill">Gmail</span><span class="pill">GPT-4.1 mini</span></div>
+  </div>
+</footer>
+
+<dialog id="mailDlg"><div class="dlghead"><div style="min-width:0"><b id="mailSubj">Email</b><div class="sub" id="mailTo"></div></div><button class="iconbtn" id="mailClose" type="button" aria-label="Close">✕</button></div><div class="dlgbody" id="mailBody"></div></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ============ CONFIG ============
+   Paste your public n8n address (for example your ngrok domain) to go live.
+   The form and chat triggers must be active, and the chat trigger must have
+   "Make Chat Publicly Available" on, with this site's address in Allowed Origins. */
+const CONFIG = {
+  n8nBase: "",                                     // e.g. "https://your-domain.ngrok-free.app"
+  applyForm: "/form/317141ae-cef9-48e9-ad13-de6c423b3c9a",
+  policyForm: "/form/e90c31ac-0439-4467-a88a-3675368e8446",
+  chat: "/webhook/ef26463a-0372-4ece-ae9c-9ed82c322660/chat",
+  coachForm: "/form/d658a3a7-8bda-4b31-8d81-decc68a8f4d7",
+};
+const LIVE = !!CONFIG.n8nBase;
+const GRAPH = {"intake":{"name":"Recruitment 1 - Intake (Form to Drive)","file":"n8n-recruitment-1-intake.json","nodes":[{"n":"Apply for a Job","x":0,"y":304,"t":"Form Trigger","c":"trigger","d":"Public application form: name, email, position, CV (PDF) and an optional motivation.","e":[]},{"n":"Validate Submission","x":224,"y":304,"t":"Code","c":"code","d":"Checks full name, email format and position, then reads the file's first bytes to make sure the CV is a real PDF between 500 bytes and 5 MB.","e":[]},{"n":"Submission Valid?","x":448,"y":304,"t":"If","c":"logic","d":"Valid submissions continue; invalid ones get the error page.","e":[]},{"n":"Show Validation Errors","x":672,"y":512,"t":"Form Ending","c":"msg","d":"Shows the candidate exactly what to fix.","e":[]},{"n":"Find Previous Applications","x":672,"y":224,"t":"Google Sheets","c":"data","d":"Looks up earlier applications with the same email.","e":[]},{"n":"Check Duplicate","x":880,"y":224,"t":"Code","c":"code","d":"Same email and same position counts as a duplicate.","e":[]},{"n":"Already Applied?","x":1104,"y":224,"t":"If","c":"logic","d":"Duplicates stop here; new applications go on to Drive.","e":[]},{"n":"Show Already Applied","x":1328,"y":64,"t":"Form Ending","c":"msg","d":"Tells the candidate their application is already in.","e":[]},{"n":"Upload CV to Drive","x":1328,"y":304,"t":"Google Drive","c":"data","d":"Saves the CV as “date – name – position.pdf” in the CV folder.","e":[]},{"n":"Log Application","x":1552,"y":304,"t":"Google Sheets","c":"data","d":"Adds a row with Status “new” to the Applications sheet.","e":[]},{"n":"Show Thank You","x":1760,"y":304,"t":"Form Ending","c":"msg","d":"“We received your CV and will reply by email within 48 hours.”","e":[]}],"edges":[["Apply for a Job","Validate Submission",0,""],["Validate Submission","Submission Valid?",0,""],["Submission Valid?","Find Previous Applications",0,"true"],["Submission Valid?","Show Validation Errors",0,"false"],["Find Previous Applications","Check Duplicate",0,""],["Check Duplicate","Already Applied?",0,""],["Already Applied?","Show Already Applied",0,"true"],["Already Applied?","Upload CV to Drive",0,"false"],["Upload CV to Drive","Log Application",0,""],["Log Application","Show Thank You",0,""]]},"batch":{"name":"Recruitment 2 - Batch Evaluation (AI Screening)","file":"n8n-recruitment-2-ai-screening.json","nodes":[{"n":"Run Batch Now","x":2576,"y":192,"t":"Manual Trigger","c":"trigger","d":"Lets HR run the batch on demand.","e":[]},{"n":"Every Hour","x":2576,"y":368,"t":"Schedule","c":"trigger","d":"Runs the screening batch every hour.","e":[]},{"n":"Get New Applications","x":2816,"y":272,"t":"Google Sheets","c":"data","d":"Reads every application with Status “new”.","e":[]},{"n":"Loop Over Applications","x":3056,"y":272,"t":"Loop Over Items","c":"logic","d":"Screens the applications one at a time.","e":[]},{"n":"Current Application","x":3296,"y":288,"t":"Edit Fields","c":"code","d":"Picks the fields for this applicant.","e":[]},{"n":"Download CV","x":3520,"y":432,"t":"Google Drive","c":"data","d":"Downloads the CV from Drive. Failures go to manual review.","e":["Retries 3×","Error branch"]},{"n":"Extract CV Text","x":3744,"y":272,"t":"Extract from File","c":"code","d":"Pulls the text layer out of the PDF.","e":[]},{"n":"Readable PDF?","x":3936,"y":112,"t":"If","c":"logic","d":"200+ characters of text means a digital PDF; less means a scan.","e":[]},{"n":"CV Text (PDF)","x":4144,"y":16,"t":"Edit Fields","c":"code","d":"Uses the PDF text.","e":[]},{"n":"OCR Scanned CV","x":4224,"y":304,"t":"Google Gemini","c":"ai","d":"Gemini Flash Lite transcribes scanned CVs.","e":["Retries 3×","Error branch"]},{"n":"CV Text (OCR)","x":4432,"y":128,"t":"Edit Fields","c":"code","d":"Uses the OCR text.","e":[]},{"n":"Prepare Application","x":4608,"y":16,"t":"Edit Fields","c":"code","d":"Adds the requirements for the chosen position.","e":[]},{"n":"Extract Candidate Profile","x":4848,"y":16,"t":"Information Extractor","c":"ai","d":"Pulls years of experience, education, skills, languages and certifications. Only facts written in the CV.","e":["Retries 3×","Error branch"]},{"n":"Profile Model","x":4848,"y":224,"t":"Groq Chat Model","c":"ai","d":"Groq gpt-oss-20b, temperature 0.","e":[]},{"n":"Score Candidate","x":5184,"y":-32,"t":"LLM Chain","c":"ai","d":"Recruiter prompt: interview 70–100, maybe 40–69, reject 0–39. Treats the CV as data, never as instructions.","e":["Retries 3×","Error branch"]},{"n":"Scoring Model","x":5184,"y":160,"t":"Groq Chat Model","c":"ai","d":"Groq gpt-oss-120b, temperature 0.","e":[]},{"n":"Evaluation Schema (Auto-fix)","x":5280,"y":272,"t":"Structured Output Parser","c":"ai","d":"Forces the JSON shape and lets a second model repair malformed output.","e":[]},{"n":"Fixing Model","x":5280,"y":480,"t":"Groq Chat Model","c":"ai","d":"Groq gpt-oss-20b repairs broken JSON.","e":[]},{"n":"Validate Evaluation","x":5552,"y":-144,"t":"Code","c":"code","d":"Guardrail: checks score and recommendation agree, and that extracted skills really appear in the CV.","e":[]},{"n":"Evaluation Valid?","x":5888,"y":160,"t":"If","c":"logic","d":"Invalid evaluations go to a human instead of the candidate.","e":[]},{"n":"Decision","x":6240,"y":0,"t":"Switch","c":"logic","d":"Routes to interview, maybe or reject.","e":[]},{"n":"Invite to Interview","x":6464,"y":-176,"t":"Gmail","c":"msg","d":"Emails the candidate an interview invitation.","e":[]},{"n":"Brief HR","x":6688,"y":0,"t":"Gmail","c":"msg","d":"Sends HR a candidate report with strengths, gaps and interview questions.","e":[]},{"n":"Flag Borderline for HR","x":6464,"y":0,"t":"Gmail","c":"msg","d":"Asks HR to decide on a “maybe” candidate.","e":[]},{"n":"Send Polite Decline","x":6464,"y":192,"t":"Gmail","c":"msg","d":"Emails the candidate a respectful decline.","e":[]},{"n":"Save Result to Sheet","x":6816,"y":976,"t":"Google Sheets","c":"data","d":"Writes score, recommendation, skills and status back to the sheet.","e":["Retries 3×"]},{"n":"Describe AI Failure","x":5888,"y":768,"t":"Edit Fields","c":"code","d":"Records which step failed and why.","e":[]},{"n":"Manual Review Info","x":6096,"y":512,"t":"Edit Fields","c":"code","d":"Collects what HR needs for a manual review.","e":[]},{"n":"Mark for Manual Review","x":6240,"y":384,"t":"Google Sheets","c":"data","d":"Sets Status to “manual review”.","e":["Retries 3×"]},{"n":"Notify HR: Manual Review","x":6496,"y":800,"t":"Gmail","c":"msg","d":"Emails HR a link to the CV for a human read.","e":[]}],"edges":[["Run Batch Now","Get New Applications",0,""],["Every Hour","Get New Applications",0,""],["Get New Applications","Loop Over Applications",0,""],["Loop Over Applications","Current Application",0,"loop"],["Current Application","Download CV",0,""],["Download CV","Extract CV Text",0,""],["Download CV","Describe AI Failure",0,"error"],["Extract CV Text","Readable PDF?",0,""],["Readable PDF?","CV Text (PDF)",0,"true"],["Readable PDF?","OCR Scanned CV",0,"false"],["OCR Scanned CV","CV Text (OCR)",0,""],["OCR Scanned CV","Describe AI Failure",0,"error"],["CV Text (PDF)","Prepare Application",0,""],["CV Text (OCR)","Prepare Application",0,""],["Prepare Application","Extract Candidate Profile",0,""],["Extract Candidate Profile","Score Candidate",0,""],["Extract Candidate Profile","Describe AI Failure",0,"error"],["Profile Model","Extract Candidate Profile",1,""],["Scoring Model","Score Candidate",1,""],["Evaluation Schema (Auto-fix)","Score Candidate",1,""],["Fixing Model","Evaluation Schema (Auto-fix)",1,""],["Score Candidate","Validate Evaluation",0,""],["Score Candidate","Describe AI Failure",0,"error"],["Validate Evaluation","Evaluation Valid?",0,""],["Evaluation Valid?","Decision",0,"true"],["Evaluation Valid?","Manual Review Info",0,"false"],["Decision","Invite to Interview",0,"Interview"],["Decision","Flag Borderline for HR",0,"Maybe"],["Decision","Send Polite Decline",0,"Reject"],["Invite to Interview","Brief HR",0,""],["Brief HR","Save Result to Sheet",0,""],["Flag Borderline for HR","Save Result to Sheet",0,""],["Send Polite Decline","Save Result to Sheet",0,""],["Save Result to Sheet","Loop Over Applications",0,""],["Describe AI Failure","Manual Review Info",0,""],["Manual Review Info","Mark for Manual Review",0,""],["Mark for Manual Review","Notify HR: Manual Review",0,""],["Notify HR: Manual Review","Loop Over Applications",0,""]]},"errors":{"name":"Recruitment 3 - Error Handler","file":"n8n-recruitment-3-error-handler.json","nodes":[{"n":"On Workflow Error","x":0,"y":0,"t":"Error Trigger","c":"trigger","d":"Fires whenever the intake or screening workflow fails.","e":[]},{"n":"Classify Error","x":224,"y":0,"t":"Code","c":"code","d":"Sorts the failure into auth, rate limit, network, AI output or data, with a severity and a suggested fix. Intake failures are always critical.","e":[]},{"n":"Get Recent Alerts","x":448,"y":0,"t":"Google Sheets","c":"data","d":"Looks up earlier alerts with the same fingerprint.","e":[]},{"n":"Check Throttle","x":672,"y":0,"t":"Code","c":"code","d":"One email per problem per hour; warnings wait for the daily digest.","e":[]},{"n":"Log Error","x":880,"y":0,"t":"Google Sheets","c":"data","d":"Appends the error to the Error Log sheet with Status “open”.","e":["Retries 3×"]},{"n":"Alert Now?","x":1104,"y":0,"t":"If","c":"logic","d":"Only unthrottled critical errors email right away.","e":[]},{"n":"Alert Admin","x":1328,"y":-80,"t":"Gmail","c":"msg","d":"Critical error email with the suggested fix and a link to the execution.","e":["Retries 3×"]},{"n":"Every Morning 8 AM","x":0,"y":304,"t":"Schedule","c":"trigger","d":"Daily digest trigger.","e":[]},{"n":"Get Error Log","x":224,"y":304,"t":"Google Sheets","c":"data","d":"Reads the whole Error Log.","e":[]},{"n":"Build Digest","x":448,"y":304,"t":"Code","c":"code","d":"Counts the last 24 hours by type and groups what is still open.","e":[]},{"n":"Anything to Report?","x":672,"y":304,"t":"If","c":"logic","d":"Skips the email on quiet days.","e":[]},{"n":"Send Daily Digest","x":880,"y":224,"t":"Gmail","c":"msg","d":"8 AM health report email.","e":["Retries 3×"]},{"n":"Every 2 Hours","x":0,"y":560,"t":"Schedule","c":"trigger","d":"Heartbeat trigger.","e":[]},{"n":"Get Waiting Applications","x":224,"y":560,"t":"Google Sheets","c":"data","d":"Reads applications still in Status “new”.","e":[]},{"n":"Find Stuck Applications","x":448,"y":560,"t":"Code","c":"code","d":"Dead-man's switch: anything waiting over 3 hours means screening has stopped.","e":[]},{"n":"Queue Stuck?","x":672,"y":560,"t":"If","c":"logic","d":"Alerts only when the queue is stuck.","e":[]},{"n":"Heartbeat Alert","x":880,"y":480,"t":"Gmail","c":"msg","d":"Emails that the recruitment queue is not moving.","e":["Retries 3×"]},{"n":"Log Heartbeat","x":1104,"y":480,"t":"Google Sheets","c":"data","d":"Records the heartbeat alert in the Error Log.","e":["Retries 3×"]}],"edges":[["On Workflow Error","Classify Error",0,""],["Classify Error","Get Recent Alerts",0,""],["Get Recent Alerts","Check Throttle",0,""],["Check Throttle","Log Error",0,""],["Log Error","Alert Now?",0,""],["Alert Now?","Alert Admin",0,"true"],["Every Morning 8 AM","Get Error Log",0,""],["Get Error Log","Build Digest",0,""],["Build Digest","Anything to Report?",0,""],["Anything to Report?","Send Daily Digest",0,"true"],["Every 2 Hours","Get Waiting Applications",0,""],["Get Waiting Applications","Find Stuck Applications",0,""],["Find Stuck Applications","Queue Stuck?",0,""],["Queue Stuck?","Heartbeat Alert",0,"true"],["Heartbeat Alert","Log Heartbeat",0,""]]},"rag":{"name":"RAG + GPT","file":"n8n-hr-policy-assistant.json","nodes":[{"n":"Upload Policy Documents","x":-1136,"y":-48,"t":"Form Trigger","c":"trigger","d":"Form for uploading PDF, DOCX or TXT policy files.","e":[]},{"n":"Add to Knowledge Base","x":-880,"y":-48,"t":"Vector Store","c":"ai","d":"Stores the chunks in the hr_policies vector store.","e":[]},{"n":"Gemini Embeddings (Insert)","x":-928,"y":112,"t":"Gemini Embeddings","c":"ai","d":"Turns each chunk into a Gemini embedding.","e":[]},{"n":"Split Into Chunks","x":-800,"y":272,"t":"Text Splitter","c":"ai","d":"Splits text into overlapping chunks (200-character overlap).","e":[]},{"n":"Read Uploaded Files","x":-800,"y":112,"t":"Document Loader","c":"ai","d":"Reads the uploaded files.","e":[]},{"n":"Employee Question","x":-176,"y":-80,"t":"Chat Trigger","c":"trigger","d":"Chat entry point for employees.","e":[]},{"n":"AI Agent","x":112,"y":-80,"t":"AI Agent","c":"ai","d":"Searches the policies before answering, quotes numbers exactly, cites the source and replies in the employee's language.","e":[]},{"n":"Simple Memory","x":176,"y":144,"t":"Window Memory","c":"ai","d":"Remembers the last 6 messages of the conversation.","e":[]},{"n":"Search HR Policies","x":304,"y":144,"t":"Vector Store","c":"ai","d":"Retrieval tool over the hr_policies store.","e":[]},{"n":"Embeddings Google Gemini","x":304,"y":336,"t":"Gemini Embeddings","c":"ai","d":"Embeds the question for the similarity search.","e":[]},{"n":"OpenAI Chat Model","x":-16,"y":128,"t":"OpenAI Chat Model","c":"ai","d":"GPT-5 mini writes the answer.","e":[]}],"edges":[["Upload Policy Documents","Add to Knowledge Base",0,""],["Gemini Embeddings (Insert)","Add to Knowledge Base",1,""],["Split Into Chunks","Read Uploaded Files",1,""],["Read Uploaded Files","Add to Knowledge Base",1,""],["Employee Question","AI Agent",0,""],["Simple Memory","AI Agent",1,""],["Search HR Policies","AI Agent",1,""],["Embeddings Google Gemini","Search HR Policies",1,""],["OpenAI Chat Model","AI Agent",1,""]]},"coach":{"name":"Session 4 - Job Application Coach v2 (Gemini Reader + GPT Agents)","file":"n8n-interview-coach.json","nodes":[{"n":"Job Application Form","x":256,"y":-48,"t":"Form Trigger","c":"trigger","d":"Public form: name, email, the job post and a PDF CV.","e":[]},{"n":"Read CV (Gemini)","x":480,"y":-48,"t":"Google Gemini","c":"ai","d":"Gemini Flash Lite transcribes the CV, so scanned PDFs work too.","e":[]},{"n":"Prepare Application","x":704,"y":-48,"t":"Edit Fields","c":"code","d":"Adds the requirements for the chosen position.","e":[]},{"n":"Career Coach (Orchestrator)","x":912,"y":-48,"t":"AI Agent","c":"ai","d":"Manager agent: calls CV Matcher, then Cover Letter Writer, then Interview Coach, and writes a short summary with 3 next steps.","e":["Retries 3×"]},{"n":"Orchestrator Model (GPT)","x":928,"y":176,"t":"OpenAI Chat Model","c":"ai","d":"GPT-4.1 mini, temperature 0.2.","e":[]},{"n":"CV Matcher","x":1056,"y":176,"t":"Agent Tool","c":"ai","d":"Recruiter agent: match score out of 100, 4 strengths, 3 gaps with a way to close each, and keywords to add.","e":[]},{"n":"Cover Letter Writer","x":1344,"y":176,"t":"Agent Tool","c":"ai","d":"Writes a ready-to-send cover letter using only facts from the CV, turning one gap into a learning story.","e":[]},{"n":"Interview Coach","x":1632,"y":176,"t":"Agent Tool","c":"ai","d":"5 likely questions with model answers: 2 technical, 2 behavioural (STAR), 1 about the biggest gap.","e":[]},{"n":"Assemble Report","x":1264,"y":-48,"t":"Code","c":"code","d":"Collects each specialist's output from the agent's intermediate steps and joins them into one report.","e":[]},{"n":"Markdown to HTML","x":1488,"y":-48,"t":"Markdown","c":"code","d":"Converts the report to HTML for the email.","e":[]},{"n":"Email Coaching Report","x":1712,"y":-48,"t":"Gmail","c":"msg","d":"Emails the full coaching report to the candidate.","e":[]},{"n":"CV Matcher Model","x":1056,"y":368,"t":"OpenAI Chat Model","c":"ai","d":"GPT-5 mini.","e":[]},{"n":"Cover Letter Writer Model","x":1344,"y":368,"t":"OpenAI Chat Model","c":"ai","d":"GPT-4 Turbo.","e":[]},{"n":"Interview Coach Model","x":1632,"y":384,"t":"OpenAI Chat Model","c":"ai","d":"GPT-4 Turbo.","e":[]}],"edges":[["CV Matcher","Career Coach (Orchestrator)",1,""],["Cover Letter Writer","Career Coach (Orchestrator)",1,""],["Interview Coach","Career Coach (Orchestrator)",1,""],["Orchestrator Model (GPT)","Career Coach (Orchestrator)",1,""],["Job Application Form","Read CV (Gemini)",0,""],["Prepare Application","Career Coach (Orchestrator)",0,""],["Career Coach (Orchestrator)","Assemble Report",0,""],["Assemble Report","Markdown to HTML",0,""],["Markdown to HTML","Email Coaching Report",0,""],["CV Matcher Model","CV Matcher",1,""],["Cover Letter Writer Model","Cover Letter Writer",1,""],["Interview Coach Model","Interview Coach",1,""],["Read CV (Gemini)","Prepare Application",0,""]]}};
+
+/* ============ helpers ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const sleep = ms => new Promise(r => setTimeout(r, matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : ms));
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),2600)}
+const store = {get(k,d){try{const v=localStorage.getItem("hb:"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("hb:"+k,JSON.stringify(v))}catch(e){}}};
+
+/* theme */
+(function(){const saved=store.get("theme",null);if(saved)document.documentElement.dataset.theme=saved;
+$("#themeBtn").onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=dark?"light":"dark";store.set("theme",r.dataset.theme);drawHorizon()}})();
+if(LIVE){$("#modePill").className="pill ok";$("#modePill").lastElementChild.textContent="Live · n8n"}
+
+/* demo clock: minutes since 00:00 of day 1 */
+let clock = 9*60;
+/* views: home, ask, prepare, apply, team, workflows */
+const VIEWS=["home","ask","prepare","apply","team","workflows"];
+function route(){
+  let h=(location.hash||"#home").slice(1); let target=null;
+  if(!VIEWS.includes(h)){ target=document.getElementById(h); const v=target?.closest("[data-view]")?.dataset.view; h=v||"home"; }
+  document.querySelectorAll("[data-view]").forEach(el=>el.hidden=el.dataset.view!==h);
+  document.querySelectorAll("[data-nav]").forEach(a=>a.classList.toggle("on",a.dataset.nav===h));
+  if(target) setTimeout(()=>target.scrollIntoView({behavior:"smooth",block:"start"}),30); else scrollTo(0,0);
+  if(h==="home") requestAnimationFrame(drawHorizon);
+  if(h==="workflows"&&!$("#canvas svg")) drawWF(wfCur);
+}
+addEventListener("hashchange",route);
+const fmtClock = m => String(Math.floor(m/60)%24).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const fmtAgo = m => { const d=clock-m; if(d<60) return d+" min ago"; const h=Math.floor(d/60); return h+" h "+(d%60? d%60+" min ":"")+"ago"; };
+function tick(){ $("#clockTop").textContent=fmtClock(clock); $("#clockH").textContent=fmtClock(clock); const next=(Math.floor(clock/60)+1)*60; if(!lastBatch) $("#lastRun").textContent="Next batch at "+fmtClock(next); }
+let lastBatch=null;
+
+/* keyword match with word boundaries, so "excel" doesn't match "excellent" */
+const kw=(text,k)=>{ const e=k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); return new RegExp((k.length<=5?"\\b"+e+"\\b":"\\b"+e),"i").test(text); };
+/* ============ roles (text from the workflow) ============ */
+const ROLES = [
+ { title:"AI Automation Engineer (Junior)", team:"Automation", reqText:"Build n8n automation workflows; integrate LLM APIs (OpenAI, Gemini, Groq); build RAG chatbots; Python or JavaScript; REST APIs, JSON and webhooks; prompt engineering; Bachelor's in CS/AI or related; Arabic and English. Nice to have: vector databases, Docker, SQL.",
+   must:[["Build n8n automation workflows",["n8n","automation","workflow"]],["Integrate LLM APIs (OpenAI, Gemini, Groq)",["openai","gemini","groq","llm","gpt"]],["Build RAG chatbots",["rag","retrieval","chatbot"]],["Python or JavaScript",["python","javascript","node.js","typescript"]],["REST APIs, JSON and webhooks",["rest","api","json","webhook"]],["Prompt engineering",["prompt"]],["Bachelor's in CS/AI or related",["bachelor","b.sc","bsc","computer science","computer engineering","artificial intelligence"]],["Arabic and English",["arabic"],["english"]]],
+   nice:[["Vector databases",["vector","pinecone","qdrant","chroma","pgvector"]],["Docker",["docker"]],["SQL",["sql","postgres","mysql"]]] },
+ { title:"Data Analyst", team:"Insights", reqText:"2+ years of data analysis; advanced SQL; Excel (pivot tables, lookups); Power BI or Tableau dashboards; Python with pandas; basic statistics; presenting insights to managers; Bachelor's in a quantitative field. Nice to have: dbt, Google Analytics.",
+   must:[["2+ years of data analysis",["analyst","analysis","analytics"]],["Advanced SQL",["sql"]],["Excel (pivot tables, lookups)",["excel","pivot","vlookup","xlookup"]],["Power BI or Tableau dashboards",["power bi","tableau","dashboard"]],["Python with pandas",["pandas"]],["Basic statistics",["statistic"]],["Presenting insights to managers",["present","stakeholder","insight","report"]],["Bachelor's in a quantitative field",["bachelor","b.sc","bsc","statistics","mathematics","economics","engineering"]]],
+   nice:[["dbt",["dbt"]],["Google Analytics",["google analytics","ga4"]]] },
+ { title:"Customer Support Specialist", team:"Customer Success", reqText:"1+ year in customer support; fluent Arabic and English (written and spoken); experience with a help-desk tool such as Zendesk, Freshdesk or HubSpot; clear written communication; problem solving and patience; willingness to work shifts. Nice to have: technical or SaaS product support.",
+   must:[["1+ year in customer support",["customer support","customer service","support agent","call center","support specialist"]],["Fluent Arabic and English",["arabic"],["english"]],["Help-desk tool (Zendesk, Freshdesk, HubSpot)",["zendesk","freshdesk","hubspot","help desk","helpdesk","intercom"]],["Clear written communication",["communication","written","writing"]],["Problem solving and patience",["problem solving","problem-solving","patience","patient"]],["Willingness to work shifts",["shift"]]],
+   nice:[["Technical or SaaS product support",["saas","technical support","it support"]]] },
+];
+$("#rolesGrid").innerHTML = ROLES.map((r,i)=>`<article class="panel role"><div class="meta"><span class="pill acc">${esc(r.team)}</span><span class="pill">Cairo · Hybrid</span></div><h3 style="font-size:1.3rem">${esc(r.title)}</h3>
+ <ul>${r.must.map(m=>`<li>${esc(m[0])}</li>`).join("")}${r.nice.map(m=>`<li class="nice">${esc(m[0])}</li>`).join("")}</ul>
+ <div class="go"><a class="btn sm" href="${LIVE?esc(CONFIG.n8nBase+CONFIG.applyForm):"#applyPanel"}" ${LIVE?'target="_blank" rel="noopener"':""} data-role="${i}">Apply</a><button class="btn ghost sm" type="button" data-try="${i}">Try a sample CV</button></div></article>`).join("");
+$("#fPos").innerHTML = `<option value="">Choose a position</option>`+ROLES.map(r=>`<option>${esc(r.title)}</option>`).join("");
+document.querySelectorAll("[data-role]").forEach(a=>a.addEventListener("click",e=>{ if(!LIVE){ e.preventDefault(); $("#fPos").value=ROLES[a.dataset.role].title; $("#applyPanel").scrollIntoView({behavior:"smooth",block:"start"}); setTimeout(()=>$("#fName").focus({preventScroll:true}),500);} }));
+document.querySelectorAll("[data-try]").forEach(b=>b.onclick=()=>{fillSample(+b.dataset.try);$("#applyPanel").scrollIntoView({behavior:"smooth",block:"start"})});
+if(LIVE){const p=$("#liveApply");p.hidden=false;p.innerHTML=`This is the demo version. <a href="${esc(CONFIG.n8nBase+CONFIG.applyForm)}" target="_blank" rel="noopener">Open the real application form</a> to apply.`}
+
+/* ============ applications sheet ============ */
+const SAMPLE_TEXT = {
+ 0:`Nour El-Sayed — Cairo — nour.elsayed@example.com
+Junior Automation Developer, Delta Digital (2024–present): built n8n workflows connecting Google Sheets, Gmail and Slack; integrated the OpenAI and Gemini APIs; built a RAG chatbot for internal documents; wrote JavaScript code nodes and handled REST APIs, JSON and webhooks; prompt engineering for extraction tasks.
+Education: B.Sc. Computer Science, Ain Shams University, 2024.
+Skills: n8n, JavaScript, Python, OpenAI, Gemini, RAG, REST API, JSON, webhooks, prompt engineering, Docker.
+Languages: Arabic (native), English (fluent).`,
+ 1:`Nour El-Sayed — Giza — nour.elsayed@example.com
+Data Analyst, Nile Retail (2023–present, 3 years): SQL queries for sales reporting, Excel pivot tables and lookups, Power BI dashboards for regional managers, presenting insights to managers monthly.
+Education: B.Sc. Statistics, Cairo University.
+Skills: SQL, Excel, Power BI, statistics, reporting.
+Languages: Arabic, English.`,
+ 2:`Nour El-Sayed — Alexandria — nour.elsayed@example.com
+Customer Support Agent, ShopEasy (2022–present): customer support over chat and email using Zendesk; rotating shifts; written communication with customers; problem solving for order issues.
+Languages: Arabic (native), English (fluent, written and spoken).`,
+};
+const SEED = () => [
+ { id:"s1", appliedMin:clock-35, name:"Mariam Hassan", email:"mariam.hassan@example.com", position:ROLES[0].title, status:"new", sample:true, read:"PDF text",
+   ev:{score:84,recommendation:"interview",matched_requirements:["Build n8n automation workflows","Integrate LLM APIs (OpenAI, Gemini, Groq)","Build RAG chatbots","Python or JavaScript","REST APIs, JSON and webhooks","Prompt engineering","Bachelor's in CS/AI or related","Arabic and English"],missing_requirements:["Docker (nice to have)"],strengths:"Two years building production n8n workflows with OpenAI and Gemini, including a RAG assistant for support tickets. Strong JavaScript and webhook experience.",concerns:"No container experience, and most work has been with a single client.",interview_questions:["Walk us through how you handled errors and retries in your support-ticket RAG workflow.","How would you stop an LLM node from returning malformed JSON in production?","Which part of an automation would you not hand to an LLM, and why?"]},
+   profile:{years:2,skills:["n8n","JavaScript","OpenAI","Gemini","RAG","REST APIs"]} },
+ { id:"s2", appliedMin:clock-55, name:"Karim Adel", email:"karim.adel@example.com", position:ROLES[1].title, status:"new", sample:true, read:"PDF text",
+   ev:{score:58,recommendation:"maybe",matched_requirements:["Advanced SQL","Excel (pivot tables, lookups)","Power BI or Tableau dashboards","Bachelor's in a quantitative field"],missing_requirements:["2+ years of data analysis (1.5 years)","Python with pandas","Presenting insights to managers"],strengths:"Solid SQL and Power BI work on real sales data, with clear dashboards in the portfolio. Quantitative degree.",concerns:"Experience is just under the 2-year bar and there is no Python in the CV.",interview_questions:["Describe a dashboard you built that changed a decision.","How would you approach cleaning a sales dataset with duplicate customers?","Would you be ready to pick up pandas in your first three months?"]},
+   profile:{years:1.5,skills:["SQL","Excel","Power BI","Statistics"]} },
+ { id:"s3", appliedMin:clock-80, name:"Youssef Nabil", email:"youssef.nabil@example.com", position:ROLES[2].title, status:"new", sample:true, read:"OCR with Gemini", scanned:true,
+   ev:{score:31,recommendation:"reject",matched_requirements:["Fluent Arabic and English"],missing_requirements:["1+ year in customer support","Help-desk tool (Zendesk, Freshdesk, HubSpot)","Willingness to work shifts"],strengths:"Fluent in Arabic and English with good written communication in the cover letter.",concerns:"No customer-facing experience and no help-desk tools in the CV.",interview_questions:["Tell us about a time you calmed down an upset person.","How do you prioritise when five customers are waiting?","Which help-desk tools have you tried, even informally?"]},
+   profile:{years:0.5,skills:["Arabic","English","Microsoft Office"]} },
+ { id:"s4", appliedMin:clock-250, name:"Salma Fathy", email:"salma.fathy@example.com", position:ROLES[0].title, status:"new", sample:true, read:"PDF text",
+   ev:{score:64,recommendation:"interview",matched_requirements:["Python or JavaScript","Prompt engineering","Arabic and English"],missing_requirements:["Build n8n automation workflows","Build RAG chatbots"],strengths:"Strong Python and prompt-engineering coursework.",concerns:"No hands-on automation work yet.",interview_questions:["What would your first n8n workflow automate?","How does retrieval-augmented generation reduce hallucination?","Describe a Python project you are proud of."]},
+   profile:{years:0.5,skills:["Python","Prompt engineering","LangChain","Kubernetes","Rust"]}, cvMissingSkills:["LangChain","Kubernetes","Rust"] },
+];
+let apps = SEED();
+const STATUS = { "new":"acc", "invited":"ok", "awaiting HR":"warn", "declined":"slate", "manual review":"bad" };
+let selected = null;
+
+function renderSheet(flashId){
+  $("#sheetBody").innerHTML = apps.map(a=>`<tr data-id="${a.id}" class="${selected===a.id?"sel":""} ${flashId===a.id?"flash":""}"><td class="tnum">${fmtClock(a.appliedMin)}<span class="sub">${esc(fmtAgo(a.appliedMin))}</span></td><td><b>${esc(a.name)}</b>${a.sample?' <span class="pill" style="padding:1px 6px">sample</span>':' <span class="pill acc" style="padding:1px 6px">you</span>'}<span class="sub">${esc(a.email)}</span></td><td>${esc(a.position)}</td><td><span class="pill ${STATUS[a.status]}"><span class="dot"></span>${esc(a.status)}</span></td><td class="tnum">${a.score!=null?a.score:"—"}</td><td>${a.done?esc(a.readMethod||""):"—"}</td></tr>`).join("");
+  document.querySelectorAll("#sheetBody tr").forEach(tr=>tr.onclick=()=>{selected=tr.dataset.id;renderSheet();showResult(apps.find(a=>a.id===selected))});
+  renderFunnel();
+}
+function renderFunnel(){
+  const order=[["new","acc","Waiting"],["invited","ok","Interview"],["awaiting HR","warn","Awaiting HR"],["declined","slate","Declined"],["manual review","bad","Manual review"]];
+  const max=Math.max(1,...order.map(o=>apps.filter(a=>a.status===o[0]).length));
+  $("#funnel").innerHTML = order.map(([s,c,l])=>{const n=apps.filter(a=>a.status===s).length;return `<div class="frow"><span>${l}</span><div class="fbar"><span style="width:${n/max*100}%;background:var(--${c==="acc"?"accent":c})"></span></div><b class="tnum" style="text-align:right">${n}</b></div>`}).join("");
+}
+
+/* ============ intake: same checks as "Validate Submission" ============ */
+let cvFile = null, cvBytes = null;
+const drop=$("#drop");
+["dragover","dragenter"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",ev=>{const f=ev.dataTransfer.files[0];if(f)setCv(f)});
+$("#fCv").onchange=e=>{const f=e.target.files[0];if(f)setCv(f)};
+async function setCv(f){ cvFile=f; cvBytes=new Uint8Array(await f.arrayBuffer()); $("#cvName").textContent=f.name; $("#cvMeta").textContent=(f.size/1024).toFixed(0)+" KB · read in your browser only"; sampleIdx=null; }
+let sampleIdx=null;
+function fillSample(i){ $("#fName").value="Nour El-Sayed"; $("#fEmail").value="nour.elsayed@example.com"; $("#fPos").value=ROLES[i].title; $("#fWhy").value="I enjoy turning messy processes into reliable systems and want to grow with a team that ships."; sampleIdx=i; cvFile={name:"Nour_El-Sayed_CV.pdf",size:48213}; cvBytes=null; $("#cvName").textContent="Nour_El-Sayed_CV.pdf"; $("#cvMeta").textContent="Sample CV (text PDF, 47 KB)"; }
+$("#fillSample").onclick=()=>fillSample(0);
+
+function validate(){
+  const errors=[];
+  const name=$("#fName").value.trim().replace(/\s+/g," "), email=$("#fEmail").value.trim().toLowerCase(), position=$("#fPos").value, motivation=$("#fWhy").value.trim();
+  if(name.length<3||name.split(" ").length<2||!/^[\p{L} .'-]+$/u.test(name)) errors.push("Please enter your full name (first and last name, letters only).");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) errors.push("Please enter a valid email address.");
+  if(!ROLES.some(r=>r.title===position)) errors.push("Please choose one of the listed positions.");
+  if(motivation.length>1500) errors.push("Please keep your motivation under 1500 characters.");
+  if(!cvFile) errors.push("Please attach your CV.");
+  else if(sampleIdx==null){
+    const head=String.fromCharCode(...cvBytes.subarray(0,5));
+    if(head!=="%PDF-") errors.push("Your CV must be a real PDF file (renaming a Word file to .pdf does not work).");
+    if(cvBytes.length>5*1024*1024) errors.push("Your CV must be smaller than 5 MB.");
+    if(cvBytes.length<500) errors.push("Your CV file looks empty or damaged. Please export it again.");
+  }
+  return {name,email,position,motivation,errors};
+}
+function journey(step){document.querySelectorAll("#journey li").forEach((li,i)=>{li.className=i<step?"done":i===step?"on":""})}
+
+$("#applyForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const v=validate(); const out=$("#screenOut");
+  journey(0);
+  if(v.errors.length){ out.innerHTML=`<div class="screen" style="border-color:var(--bad)"><h3>Please fix your application</h3><ul>${v.errors.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><p class="note" style="margin-top:10px">Go back, correct the fields above and submit again.</p></div>`; return; }
+  if(apps.some(a=>a.email===v.email&&a.position===v.position)){ out.innerHTML=`<div class="screen"><h3>You have already applied</h3><p>We already have your application for ${esc(v.position)}. We will reply to ${esc(v.email)} within 48 hours.</p></div>`; return; }
+  out.innerHTML=`<div class="screen"><p class="muted">Uploading CV to Drive…</p></div>`;
+  let text="", read="text";
+  if(sampleIdx!=null) text=SAMPLE_TEXT[sampleIdx];
+  else { try{ text=await pdfText(cvBytes) }catch(err){ text="" } }
+  await sleep(500); journey(2);
+  const id="u"+Date.now();
+  apps.push({id,appliedMin:clock,name:v.name,email:v.email,position:v.position,motivation:v.motivation,status:"new",sample:false,cvText:text,read:text.trim().length>=200?"PDF text":"scan"});
+  selected=id; renderSheet(id);
+  out.innerHTML=`<div class="screen" style="border-color:var(--ok)"><h3>Thank you for applying!</h3><p>We received your CV and will reply by email within 48 hours.</p>
+    <p class="note" style="margin-top:12px">${text.trim().length>=200?`We read ${text.trim().length.toLocaleString()} characters of text from your PDF.`:"We couldn't find a text layer in this PDF, so screening will try OCR."} Your row is now in the Applications sheet with Status “new”.</p>
+    <p class="note" style="margin-top:10px">Our recruiter agent screens new applications every hour. <a href="#screening" id="goScreen">Curious? Watch it screen yours</a> in the HR team view.</p></div>`;
+  $("#goScreen").onclick=()=>setTimeout(runBatch,900);
+});
+
+/* PDF text via pdf.js, loaded only when needed */
+async function pdfText(bytes){
+  if(!window.pdfjsLib){ await new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";s.onload=res;s.onerror=rej;document.head.appendChild(s)});
+    pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; }
+  const doc=await pdfjsLib.getDocument({data:bytes.slice()}).promise; let t="";
+  for(let p=1;p<=Math.min(doc.numPages,6);p++){const pg=await doc.getPage(p);const c=await pg.getTextContent();t+=c.items.map(i=>i.str).join(" ")+"\n"}
+  return t;
+}
+
+/* demo scorer: stands in for Groq. Matches each requirement's keywords in the CV text */
+function demoEvaluate(app){
+  const role=ROLES.find(r=>r.title===app.position); const cv=(app.cvText||"").toLowerCase();
+  const has=groups=>groups.every(g=>g.some(k=>kw(cv,k)));
+  const test=req=>has(req.slice(1));
+  const matched=role.must.filter(test).map(r=>r[0]), missing=role.must.filter(r=>!test(r)).map(r=>r[0]);
+  const niceHit=role.nice.filter(test).map(r=>r[0]);
+  missing.push(...role.nice.filter(r=>!test(r)).map(r=>r[0]+" (nice to have)"));
+  let score=Math.round(matched.length/role.must.length*90+niceHit.length/role.nice.length*10);
+  const recommendation=score>=70?"interview":score>=40?"maybe":"reject";
+  const yrs=(cv.match(/(\d+(?:\.\d)?)\+?\s*years?/)||[])[1];
+  const skillWords=[...new Set(role.must.concat(role.nice).flatMap(r=>r.slice(1).flat()).filter(k=>kw(cv,k)))].slice(0,6);
+  return { ev:{score,recommendation,matched_requirements:matched.concat(niceHit),missing_requirements:missing,
+    strengths: matched.length?`The CV shows ${matched.slice(0,3).join(", ").toLowerCase()}. ${matched.length} of ${role.must.length} must-have requirements are covered.`:"Few of the requirements appear in the CV text.",
+    concerns: missing.length?`Not found in the CV: ${missing.slice(0,3).join(", ").toLowerCase()}.`:"No major gaps found.",
+    interview_questions: (missing.length?missing:matched).slice(0,3).map(m=>`Tell us about your experience with ${m.replace(/ \(nice to have\)/,"").toLowerCase()}.`)},
+    profile:{years: yrs?Number(yrs):"",skills:skillWords} };
+}
+
+/* port of "Validate Evaluation" */
+function validateEvaluation(ev, profile, cvText, cvMissingSkills){
+  const problems=[];
+  if(!Number.isInteger(ev.score)||ev.score<0||ev.score>100) problems.push("score must be a whole number from 0 to 100");
+  if(!["interview","maybe","reject"].includes(ev.recommendation)) problems.push("recommendation must be interview, maybe or reject");
+  if(ev.recommendation==="interview"&&ev.score<70) problems.push("interview needs a score of 70 or more");
+  if(ev.recommendation==="reject"&&ev.score>=40) problems.push("reject needs a score below 40");
+  if(!(ev.matched_requirements||[]).length&&!(ev.missing_requirements||[]).length) problems.push("the evaluation lists no requirements");
+  const unverified = cvMissingSkills || (cvText? (profile.skills||[]).filter(s=>!cvText.toLowerCase().includes(String(s).toLowerCase().split(" (")[0])) : []);
+  if(unverified.length>2) problems.push("skills not found in the CV: "+unverified.join(", "));
+  return problems;
+}
+
+/* ============ batch run ============ */
+let running=false;
+function log(k,v="",cls=""){ const ol=$("#log"); const e=ol.querySelector(".empty"); if(e) e.remove(); const li=document.createElement("li"); li.className=cls; li.innerHTML=`<i></i><div><span class="k">${esc(k)}</span>${v?` <span class="v">· ${esc(v)}</span>`:""}</div>`; ol.appendChild(li); ol.scrollTop=ol.scrollHeight; }
+async function step(k,v,cls,ms=230){ log(k,v,cls); await sleep(ms); }
+
+async function runBatch(){
+  if(running) return; running=true; $("#runBatch").disabled=true; $("#execState").className="pill acc"; $("#execState").textContent="running";
+  $("#log").innerHTML=""; log("Run Batch Now",`manual run at ${fmtClock(clock)}`,"head");
+  const queue=apps.filter(a=>a.status==="new");
+  await step("Get New Applications",`${queue.length} row${queue.length===1?"":"s"} with Status “new”`);
+  if(!queue.length){ await step("Loop Over Applications","done · nothing to screen","ok"); }
+  for(const a of queue){
+    selected=a.id; renderSheet();
+    log("Loop Over Applications",`${a.name} · ${a.position}`,"head"); await sleep(200);
+    await step("Current Application",a.email);
+    await step("Download CV","from the CV folder in Drive");
+    let chars = a.sample ? (a.scanned?42:2400+a.name.length*37) : (a.cvText||"").trim().length;
+    await step("Extract CV Text",`${chars.toLocaleString()} characters`);
+    let failed=null;
+    if(chars>=200){ await step("Readable PDF?","true"); await step("CV Text (PDF)","readMethod = PDF text"); a.readMethod="PDF text"; }
+    else{ await step("Readable PDF?","false · looks like a scan","warn");
+      if(a.sample){ await step("OCR Scanned CV","Gemini Flash Lite transcribed the scan",""," "); await step("CV Text (OCR)","readMethod = OCR with Gemini"); a.readMethod="OCR with Gemini"; }
+      else { await step("OCR Scanned CV","error branch · OCR isn't available in this demo","bad"); failed="An automatic step failed (OCR Scanned CV): no text could be read from the CV"; a.readMethod="—"; }
+    }
+    let ev,profile,problems=[];
+    if(!failed){
+      await step("Prepare Application","adds the requirements for "+a.position);
+      if(a.sample){ ev=a.ev; profile=a.profile; } else { const r=demoEvaluate(a); ev=r.ev; profile=r.profile; a.ev=ev; a.profile=profile; }
+      await step("Extract Candidate Profile",`${profile.years!==""?profile.years+" yrs · ":""}${(profile.skills||[]).slice(0,4).join(", ")}`,"",320);
+      await step("Score Candidate",`${ev.score}/100 · ${ev.recommendation}${a.sample?"":" (demo keyword scorer)"}`,"",420);
+      problems=validateEvaluation(ev,profile,a.cvText,a.cvMissingSkills);
+      await step("Validate Evaluation",problems.length?problems.join("; "):"all checks passed",problems.length?"warn":"ok");
+      await step("Evaluation Valid?",problems.length?"false":"true",problems.length?"warn":"");
+    }
+    a.problems=failed||problems.join("; ");
+    if(failed||problems.length){
+      if(failed) await step("Describe AI Failure",failed,"bad");
+      await step("Manual Review Info","name, email, position, problems");
+      await step("Mark for Manual Review","Status = manual review","bad");
+      await step("Notify HR: Manual Review","email to HR with a link to the CV");
+      a.status="manual review"; a.score=failed?null:ev.score; a.mails=[mailManual(a)];
+    } else {
+      const route={interview:"Interview",maybe:"Maybe",reject:"Reject"}[ev.recommendation];
+      await step("Decision",route,ev.recommendation==="interview"?"ok":ev.recommendation==="maybe"?"warn":"");
+      if(ev.recommendation==="interview"){ await step("Invite to Interview","email to "+a.email,"ok"); await step("Brief HR","candidate report to HR"); a.mails=[mailInvite(a),mailBrief(a,ev,profile)]; }
+      if(ev.recommendation==="maybe"){ await step("Flag Borderline for HR","HR decides","warn"); a.mails=[mailBorderline(a,ev,profile)]; }
+      if(ev.recommendation==="reject"){ await step("Send Polite Decline","email to "+a.email); a.mails=[mailDecline(a)]; }
+      a.status={interview:"invited",maybe:"awaiting HR",reject:"declined"}[ev.recommendation]; a.score=ev.score;
+      await step("Save Result to Sheet",`Status = ${a.status}, Score = ${a.score}`);
+    }
+    a.done=true; renderSheet(a.id); showResult(a);
+  }
+  if(queue.length) await step("Loop Over Applications","done · batch finished","ok");
+  lastBatch=clock; $("#lastRun").textContent=`Last batch ${fmtClock(clock)} · ${queue.length} screened`;
+  heartbeat(false);
+  running=false; $("#runBatch").disabled=false; $("#execState").className="pill ok"; $("#execState").textContent="succeeded";
+}
+$("#runBatch").onclick=runBatch;
+$("#resetLab").onclick=()=>{ if(running) return; apps=SEED(); selected=null; $("#result").hidden=true; $("#log").innerHTML=`<li class="empty" style="display:block">Press “Run Batch Now” to process every application with Status “new”.</li>`; $("#execState").className="pill"; $("#execState").textContent="idle"; renderSheet(); toast("Sample data restored"); };
+
+function showResult(a){
+  const el=$("#result");
+  if(!a||!a.done){ el.hidden=false; el.innerHTML=`<div class="note" style="grid-column:1/-1">${a?esc(a.name)+" hasn't been screened yet. Run the batch.":""}</div>`; return; }
+  const ev=a.ev||{}; const c=a.status==="invited"?"ok":a.status==="awaiting HR"?"warn":a.status==="manual review"?"bad":"slate";
+  const pct=a.score!=null?a.score:0, R=56, C=2*Math.PI*R;
+  el.hidden=false;
+  el.innerHTML=`<div class="dial"><svg viewBox="0 0 132 132" aria-hidden="true"><circle cx="66" cy="66" r="${R}" fill="none" stroke="var(--surface-2)" stroke-width="12"/><circle cx="66" cy="66" r="${R}" fill="none" stroke="var(--${c==="slate"?"slate":c})" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}" style="transition:stroke-dashoffset .8s ease"/></svg><div class="num"><div><b class="tnum">${a.score!=null?a.score:"—"}</b><small>/ 100</small></div></div></div>
+  <div style="min-width:0;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><h3 style="font-size:1.4rem">${esc(a.name)}</h3><span class="pill ${c}"><span class="dot"></span>${esc(a.status)}</span><span class="pill">${esc(a.position)}</span><span class="pill">${esc(a.readMethod||"")}</span></div>
+    ${a.problems?`<div class="classified" style="border-color:var(--bad)"><b style="color:var(--bad)">Guardrail stopped this evaluation</b><span>${esc(a.problems)}</span><span class="note">The candidate gets no automatic email. HR reads the CV instead.</span></div>`:""}
+    ${ev.matched_requirements?`<div class="rgrid">
+      <div><h4>Requirements met</h4><ul>${ev.matched_requirements.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+      <div><h4>Missing</h4><ul>${(ev.missing_requirements.length?ev.missing_requirements:["Nothing major"]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+      <div><h4>Strengths</h4><p style="font-size:.9rem">${esc(ev.strengths)}</p></div>
+      <div><h4>Concerns</h4><p style="font-size:.9rem">${esc(ev.concerns)}</p></div>
+      <div class="full"><h4>Suggested interview questions</h4><ol style="margin:0;padding-left:20px;font-size:.9rem">${ev.interview_questions.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div></div>`:""}
+    <div><h4 class="eyebrow" style="margin:0 0 8px">Emails sent</h4><div class="outbox">${(a.mails||[]).map((m,i)=>`<button class="mail" type="button" data-m="${i}"><span class="sw" style="background:${m.color}"></span><span><b>${esc(m.subject)}</b><br><span class="note">to ${esc(m.to)}</span></span></button>`).join("")}</div></div>
+  </div>`;
+  el.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>openMail(a.mails[b.dataset.m]));
+}
+
+/* ============ emails, rebuilt from the workflow templates ============ */
+const HR_EMAIL="hr@horizonbyte.example";
+function shell(color,eyebrow,title,body,foot){return `<div class="em" style="background:#f4f5f7;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;"><tr><td style="background:${color};padding:24px 32px;color:#ffffff;"><div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.85;">${eyebrow}</div><div style="font-size:22px;font-weight:bold;margin-top:6px;">${title}</div></td></tr><tr><td style="padding:26px 32px;color:#1f2937;font-size:15px;line-height:1.6;">${body}</td></tr><tr><td style="padding:14px 32px;background:#f9fafb;color:#9ca3af;font-size:12px;text-align:center;">Horizon Byte Solutions &middot; ${foot}</td></tr></table></div>`}
+const li=a=>(a||[]).map(x=>"<li>"+esc(x)+"</li>").join("");
+const first=a=>esc(a.name.split(" ")[0]);
+function mailInvite(a){return{to:a.email,color:"#2563EB",subject:`Next step: interview for ${a.position}`,html:shell("#2563EB","Your application","We'd like to meet you!",`<p>Hi ${first(a)},</p><p>Thank you for applying for the <b>${esc(a.position)}</b> role. Your profile stood out to our team, and we would like to invite you to a 30-minute online interview.</p><p>Please reply to this email with <b>three time slots</b> that suit you during the next 5 working days.</p><p>We look forward to speaking with you.</p><p>Best regards,<br><b>Talent Acquisition Team</b></p>`,"Talent Acquisition")}}
+function report(a,ev,p){return `<p><b>Position:</b> ${esc(a.position)}<br><b>Email:</b> ${esc(a.email)}<br><b>Experience:</b> ${esc(p.years)} years<br><b>Top skills:</b> ${esc((p.skills||[]).join(", "))}</p><p><b>Strengths:</b> ${esc(ev.strengths)}</p><p><b>Concerns:</b> ${esc(ev.concerns)}</p><p><b>Requirements met</b></p><ul>${li(ev.matched_requirements)}</ul><p><b>Missing</b></p><ul>${li(ev.missing_requirements)}</ul>`}
+function mailBrief(a,ev,p){return{to:HR_EMAIL,color:"#047857",subject:`Candidate to interview: ${a.name} - ${a.position} (${ev.score}/100)`,html:shell("#047857","Candidate report",`${esc(a.name)} &middot; ${ev.score}/100`,report(a,ev,p)+`<p><b>Suggested interview questions</b></p><ol>${li(ev.interview_questions)}</ol>`,"Talent Acquisition")}}
+function mailBorderline(a,ev,p){return{to:HR_EMAIL,color:"#B45309",subject:`Borderline candidate: ${a.name} - ${a.position} (${ev.score}/100)`,html:shell("#B45309","Borderline candidate: your decision",`${esc(a.name)} &middot; ${ev.score}/100`,report(a,ev,p)+`<p style="background:#FEF3C7;padding:12px;border-radius:8px;">The AI rated this candidate as <b>maybe</b>. To interview them, reply to the candidate directly and set their Status in the Applications sheet to <b>invited</b>; otherwise set it to <b>declined</b>.</p><p><b>Suggested interview questions</b></p><ol>${li(ev.interview_questions)}</ol>`,"Talent Acquisition")}}
+function mailDecline(a){return{to:a.email,color:"#4B5563",subject:`Your application for ${a.position}`,html:shell("#4B5563","Your application","Thank you for applying",`<p>Hi ${first(a)},</p><p>Thank you for your interest in the <b>${esc(a.position)}</b> role and for the time you spent applying.</p><p>After reviewing your application, we have decided to move forward with candidates whose experience more closely matches the current requirements. We will keep your CV on file and contact you if a suitable role opens.</p><p>We wish you every success in your job search.</p><p>Best regards,<br><b>Talent Acquisition Team</b></p>`,"Talent Acquisition")}}
+function mailManual(a){return{to:HR_EMAIL,color:"#D97706",subject:`Manual review needed: ${a.name} - ${a.position}`,html:shell("#D97706","Manual review","The AI could not evaluate this application",`<p><b>Candidate:</b> ${esc(a.name)} (${esc(a.email)})<br><b>Position:</b> ${esc(a.position)}</p><p><b>Problem:</b> ${esc(a.problems)}</p><p>Its Status in the Applications sheet is now <b>manual review</b>. Please review the CV manually.</p>`,"Talent Acquisition")}}
+function openMail(m){ $("#mailSubj").textContent=m.subject; $("#mailTo").textContent="To: "+m.to; $("#mailBody").innerHTML=m.html; const d=$("#mailDlg"); if(d.showModal) d.showModal(); else d.setAttribute("open",""); }
+$("#mailClose").onclick=()=>$("#mailDlg").close();
+$("#mailDlg").addEventListener("click",e=>{if(e.target.id==="mailDlg")e.target.close()});
+
+/* ============ Prepare: Job Application Coach ============ */
+const VOCAB = (()=>{ const m=new Map(); ROLES.forEach(r=>r.must.concat(r.nice).forEach(x=>{ if(!m.has(x[0])) m.set(x[0],x.slice(1)) }));
+  [["Kubernetes",[["kubernetes"]]],["Cloud (AWS, Azure, GCP)",[["aws","azure","gcp","google cloud"]]],["React",[["react"]]],["Machine learning",[["machine learning","scikit","tensorflow","pytorch"]]],["Git",[["git"]]],["Agile / Scrum",[["agile","scrum"]]],["Teamwork",[["team"]]]].forEach(([k,v])=>{if(!m.has(k))m.set(k,v)});
+  return [...m.entries()]; })();
+const TIPS = { "Docker":"containerise one of your workflows with Docker Compose and link it on GitHub", "Build RAG chatbots":"build a small RAG bot over a public FAQ and publish a short demo", "Vector databases":"store embeddings for one project in Qdrant or pgvector", "SQL":"finish a SQL course and add one query-heavy project", "Python with pandas":"redo one Excel analysis in pandas and share the notebook", "Help-desk tool (Zendesk, Freshdesk, HubSpot)":"take the free Zendesk or HubSpot Service Hub training", "Willingness to work shifts":"state your shift availability clearly in the CV summary", "Prompt engineering":"document 3 prompts you iterated on, with before and after results" };
+let pSample=null, pBytes=null, pFileName="";
+function jobPost(r){ return `Horizon Byte Solutions is hiring a ${r.title} (${r.team}, Cairo, hybrid).\n\nRequirements: ${r.reqText}`; }
+$("#pJobPick").innerHTML=ROLES.map((r,i)=>`<button class="btn ghost sm" type="button" data-j="${i}">${esc(r.title)}</button>`).join("");
+$("#pJobPick").querySelectorAll("button").forEach(b=>b.onclick=()=>{ $("#pJob").value=jobPost(ROLES[b.dataset.j]); if(pSample!=null){pSample=+b.dataset.j} });
+$("#pCv").onchange=async e=>{const f=e.target.files[0]; if(!f) return; pBytes=new Uint8Array(await f.arrayBuffer()); pFileName=f.name; pSample=null; $("#pCvName").textContent=f.name; $("#pCvMeta").textContent=(f.size/1024).toFixed(0)+" KB · read in your browser only"};
+$("#pSample").onclick=()=>{ const idx=Math.max(0,ROLES.findIndex(r=>$("#pJob").value.includes(r.title))); if(!$("#pJob").value.trim()) $("#pJob").value=jobPost(ROLES[idx]);
+  pSample=idx; $("#pName").value="Nour El-Sayed"; $("#pEmail").value="nour.elsayed@example.com"; $("#pCvName").textContent="Nour_El-Sayed_CV.pdf"; $("#pCvMeta").textContent="Sample CV for this role"; };
+if(LIVE){const p=$("#liveCoach");p.hidden=false;p.innerHTML=`This is the demo version. <a href="${esc(CONFIG.n8nBase+CONFIG.coachForm)}" target="_blank" rel="noopener">Open the real coach form</a> to get your report by email.`}
+
+function proof(cv,keys){ const flat=keys.flat(); const sents=cv.split(/(?<=[.;:\n])\s+|\n/).map(s=>s.trim()).filter(Boolean); const s=sents.find(x=>flat.some(k=>kw(x,k)))||""; const w=s.replace(/^[^:]{0,40}:\s*/,"").split(/\s+/); return w.slice(0,14).join(" ")+(w.length>14?"…":""); }
+function coach(name,jd,cv){
+  const J=jd.toLowerCase(), C=cv.toLowerCase();
+  const reqs=VOCAB.filter(([l,g])=>g.some(gr=>gr.some(k=>kw(J,k))));
+  if(reqs.length<3) return null;
+  const ok=([l,g])=>g.every(gr=>gr.some(k=>kw(C,k)));
+  const seen=new Set(); const uniq=reqs.filter(([l,g])=>{const k=g[0][0]; if(seen.has(k)) return false; seen.add(k); return true;});
+  const met=uniq.filter(ok), gaps=uniq.filter(r=>!ok(r));
+  const score=Math.max(8,Math.min(96,Math.round(met.length/uniq.length*100)));
+  const first=name.split(" ")[0];
+  const strengths=met.slice(0,4).map(([l,g])=>({l,p:proof(cv,g)}));
+  const gapList=gaps.slice(0,3).map(([l])=>({l,tip:TIPS[l]||`build one small project that uses ${l.toLowerCase()} and add it to your CV`}));
+  const keywords=[...new Set(gaps.map(([l,g])=>g[0][0]))].slice(0,5);
+  const why=score>=70?"most of the core requirements are clearly covered.":score>=45?"a solid base with a few clear gaps to close.":"several core requirements are not visible in the CV yet.";
+  const steps=[ gapList[0]?`Close your biggest gap: ${gapList[0].tip}.`:"Add measurable results (numbers) to your two most recent roles.",
+    keywords.length?`Add the job's own wording to your CV where it's true: ${keywords.slice(0,3).join(", ")}.`:"Mirror the job post's wording in your CV summary.",
+    `Rehearse the 5 interview answers below out loud, especially the one about ${gapList[0]?gapList[0].l.toLowerCase():"your recent work"}.` ];
+  const role=(jd.match(/hiring an? ([^(\n.]+)/i)||[])[1]?.trim()||"this role";
+  const letter=[`Dear Hiring Manager,`,
+    `I am applying for the ${role} position. ${strengths[0]?`My experience with ${strengths[0].l.toLowerCase()}`:"My background"}${strengths[1]?` and ${strengths[1].l.toLowerCase()}`:""} matches what your team needs.`,
+    strengths.length?`In my current work I ${strengths.slice(0,2).map(s=>s.p.replace(/\.$/,"").replace(/^[A-Z]/,c=>c.toLowerCase())).join(", and ")}. ${strengths[2]?`I also bring ${strengths[2].l.toLowerCase()}.`:""}`:`I am eager to bring my skills to your team.`,
+    gapList[0]?`I am currently strengthening my ${gapList[0].l.toLowerCase()}, and I learn quickly by building real projects.`:`I would welcome the chance to grow with Horizon Byte Solutions.`,
+    `Thank you for your time. I would be glad to discuss how I can contribute.`,`Kind regards,\n${name}`];
+  const qs=[
+    ...(strengths.slice(0,2).map(s=>({q:`Walk us through your experience with ${s.l.toLowerCase()}.`,a:`Explain one concrete project: ${s.p.replace(/…$/,"")}. Name the tools, your role, and one result you can measure.`}))),
+    {q:"Tell us about a time a deadline was at risk.",a:"Situation: a release slipped. Action: you split the work, flagged the risk early and cut scope with the manager. Result: shipped on time with the core features."},
+    {q:"Describe a time you had to learn something quickly.",a:"Situation: a new tool on a live project. Action: you used the docs and a small prototype first. Result: delivered the feature and documented it for the team."},
+    {q:`We noticed ${gapList[0]?gapList[0].l.toLowerCase():"one area"} isn't in your CV. How would you handle it?`,a:`Be honest that it's new to you, then give the plan: ${gapList[0]?gapList[0].tip:"a focused course and a small project"}, in your first month.`}];
+  while(qs.length<5) qs.unshift({q:"Why do you want this role?",a:"Connect your strongest experience to what the team builds, and say what you want to learn here."});
+  return {score,why,strengths,gapList,keywords,steps,letter,qs:qs.slice(0,5),first};
+}
+async function agentStep(i,label){ const a=document.querySelector(`.agent[data-a="${i}"]`); a.className="agent work"; a.querySelector(".pill").textContent="working"; a.querySelector(".pill").className="pill acc"; await sleep(1000); a.className="agent done"; a.querySelector(".pill").textContent=label; a.querySelector(".pill").className="pill ok"; }
+$("#prepForm").addEventListener("submit",async e=>{
+  e.preventDefault(); const out=$("#prepOut");
+  const name=$("#pName").value.trim().replace(/\s+/g," "), email=$("#pEmail").value.trim().toLowerCase(), jd=$("#pJob").value.trim();
+  const errs=[]; if(name.split(" ").length<2) errs.push("Please enter your first and last name."); if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) errs.push("Please enter a valid email address."); if(jd.length<80) errs.push("Paste the full job post, including its requirements."); if(pSample==null&&!pBytes) errs.push("Please attach your CV as a PDF, or use the sample CV.");
+  if(errs.length){ out.innerHTML=`<div class="classified" style="border-color:var(--bad)"><b>Please fix the form</b><ul style="margin:0;padding-left:18px">${errs.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`; return; }
+  document.querySelectorAll(".agent").forEach(a=>{a.className="agent";a.querySelector(".pill").className="pill";a.querySelector(".pill").textContent="idle"});
+  $("#orchState").className="pill acc"; $("#orchState").textContent="reading CV";
+  out.innerHTML=`<p class="note">Gemini is transcribing the CV…</p>`;
+  let cv=""; if(pSample!=null) cv=SAMPLE_TEXT[pSample]; else { try{ cv=await pdfText(pBytes) }catch(err){ cv="" } }
+  await sleep(600);
+  if(cv.trim().length<100){ $("#orchState").className="pill bad"; $("#orchState").textContent="stopped"; out.innerHTML=`<div class="classified"><b>No text found in this PDF</b><span class="note">The real workflow reads scans with Gemini. This demo can only read PDFs that have a text layer. Try the sample CV, or use the live form.</span></div>`; return; }
+  const r=coach(name,jd,cv);
+  if(!r){ $("#orchState").className="pill warn"; $("#orchState").textContent="stopped"; out.innerHTML=`<div class="classified"><b>Not enough requirements to compare</b><span class="note">The demo matcher recognises common tech, data and support skills. Paste a job post that lists its requirements, or pick one of the open roles.</span></div>`; return; }
+  $("#orchState").textContent="delegating";
+  await agentStep(0,`${r.score}/100`); await agentStep(1,"letter ready"); await agentStep(2,"5 questions");
+  $("#orchState").className="pill ok"; $("#orchState").textContent="report sent";
+  const c=r.score>=70?"ok":r.score>=45?"warn":"bad", R=40, Cc=2*Math.PI*R;
+  out.innerHTML=`<div class="summary"><div class="dial" style="width:100px;height:100px"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="${R}" fill="none" stroke="var(--surface-2)" stroke-width="10"/><circle cx="50" cy="50" r="${R}" fill="none" stroke="var(--${c})" stroke-width="10" stroke-linecap="round" stroke-dasharray="${Cc}" stroke-dashoffset="${Cc*(1-r.score/100)}" style="transition:stroke-dashoffset .8s"/></svg><div class="num"><div><b class="tnum" style="font-size:1.7rem">${r.score}</b><small>match</small></div></div></div>
+    <div style="min-width:0;display:flex;flex-direction:column;gap:12px"><p><b>Hi ${esc(r.first)},</b> your CV scores <b>${r.score}/100</b> for this job: ${esc(r.why)}</p>
+    <div class="cols"><div><div class="eyebrow">Strengths</div><ul>${r.strengths.map(s=>`<li>${esc(s.l)}</li>`).join("")||"<li>None found yet</li>"}</ul></div><div><div class="eyebrow">Gaps</div><ul>${r.gapList.map(g=>`<li>${esc(g.l)}</li>`).join("")||"<li>No major gaps</li>"}</ul></div></div>
+    <div><div class="eyebrow" style="margin-bottom:6px">Your next 3 steps</div><ol style="margin:0;padding-left:20px;font-size:.9rem">${r.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol></div>
+    ${r.keywords.length?`<div><div class="eyebrow" style="margin-bottom:6px">Keywords to add, if true</div><div class="kw">${r.keywords.map(k=>`<span class="pill">${esc(k)}</span>`).join("")}</div></div>`:""}</div></div>
+    <div class="sent"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><div><b>Detailed report sent to ${esc(email)}</b><div class="note">Match analysis, a tailored cover letter and 5 interview answers.</div></div><button class="btn sm" type="button" id="seeReport">Open the email</button></div>`;
+  const ri=ROLES.findIndex(x=>jd.includes(x.title));
+  if(ri>=0){ out.insertAdjacentHTML("beforeend",`<div class="nextstep" style="margin-top:0"><span class="muted">Ready?</span><a class="btn" href="#applyPanel" id="prepApply">Apply for ${esc(ROLES[ri].title)} →</a></div>`); $("#prepApply").onclick=()=>{ $("#fName").value=name; $("#fEmail").value=email; $("#fPos").value=ROLES[ri].title; if(pSample!=null){ fillSample(ri); $("#fName").value=name; $("#fEmail").value=email; } }; }
+  $("#seeReport").onclick=()=>openMail(coachMail(name,email,r));
+});
+function coachMail(name,email,r){
+  const h2='style="color:#7C3AED;font-size:19px;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #EDE9FE;"', h3='style="color:#111827;font-size:15px;margin:18px 0 6px;"';
+  const body=`<p>Hi ${esc(r.first)},</p><p>Your CV scores <b>${r.score}/100</b> for this role: ${esc(r.why)} The full analysis, a cover letter and your interview prep are below.</p><h3 ${h3}>Your Next 3 Steps</h3><ol>${r.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+  <h2 ${h2}>Match Analysis</h2><p><b>Match Score: ${r.score}/100</b>: ${esc(r.why)}</p><h3 ${h3}>Strengths</h3><ul>${r.strengths.map(s=>`<li>${esc(s.l)} - ${esc(s.p)}</li>`).join("")}</ul><h3 ${h3}>Gaps</h3><ul>${r.gapList.map(g=>`<li>${esc(g.l)} - ${esc(g.tip)}</li>`).join("")||"<li>No major gaps</li>"}</ul>${r.keywords.length?`<h3 ${h3}>Keywords to Add</h3><p>${esc(r.keywords.join(", "))}</p>`:""}
+  <h2 ${h2}>Tailored Cover Letter</h2>${r.letter.map(p=>`<p>${esc(p).replace(/\n/g,"<br>")}</p>`).join("")}
+  <h2 ${h2}>Interview Preparation</h2>${r.qs.map((q,i)=>`<p><b>${i+1}. ${esc(q.q)}</b><br>${esc(q.a)}</p>`).join("")}`;
+  return {to:email,color:"#7C3AED",subject:`Your job application coaching report, ${r.first}`,html:`<div class="em" style="background:#f4f5f7;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;"><tr><td style="background:#7C3AED;padding:24px 32px;color:#ffffff;"><div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:0.85;">Job Application Coach</div><div style="font-size:22px;font-weight:bold;margin-top:6px;">Your personal coaching report</div></td></tr><tr><td style="padding:8px 32px 28px;color:#1f2937;font-size:15px;line-height:1.6;">${body}</td></tr><tr><td style="padding:16px 32px;background:#f9fafb;color:#9ca3af;font-size:12px;text-align:center;">Prepared by a team of AI agents. Review everything before you send your application.</td></tr></table></div>`};
+}
+
+/* ============ Ask HR (RAG) ============ */
+const POLICIES=[
+ {title:"Leave Policy",text:`Full-time employees receive 21 days of paid annual leave per calendar year. Employees with 10 or more years of service, or aged 50 or over, receive 30 days. Annual leave requests must be submitted in the HR portal at least 7 days in advance and approved by the direct manager. Up to 5 unused leave days can be carried over to the next year and must be used by 31 March. Sick leave of more than 2 consecutive days requires a medical certificate. Maternity leave is 4 months of fully paid leave. Paternity leave is 3 working days of paid leave. Employees can take up to 6 days of casual leave per year, deducted from annual leave.`},
+ {title:"Remote Work Policy",text:`Employees may work remotely up to 2 days per week after completing their 3-month probation period. Remote days must be agreed with the direct manager by Thursday of the previous week. Core hours are 10:00 to 15:00 Cairo time, and employees must be reachable on Microsoft Teams during core hours. The company reimburses home internet up to 300 EGP per month for employees on a hybrid schedule. Customer Support Specialists on shifts follow the shift rota instead of the 2-day rule. Company laptops must be used with the VPN when working remotely.`},
+ {title:"Expenses Policy",text:`Business expenses must be submitted within 30 days with original receipts. Taxi and ride-hailing costs for client visits are reimbursed in full. The meal allowance during business travel is 400 EGP per day inside Egypt and 50 USD per day abroad. Expenses above 5,000 EGP need prior approval from the department head. Approved reimbursements are paid with the next monthly salary. Training courses and certifications related to your role are covered up to 15,000 EGP per year with manager approval.`},
+ {title:"Working Hours & Conduct",text:`The working week is Sunday to Thursday, 40 hours per week. Standard hours are 9:00 to 17:00 with a one-hour lunch break. During Ramadan, working hours are reduced to 6 hours per day. Overtime must be approved in advance by the direct manager and is compensated with time off in lieu. Employees must keep candidate and customer data confidential and may not share it outside company systems. Harassment of any kind should be reported to HR at hr@company.com or to any manager.`},
+];
+let chunks=[];
+function split(text,size=1000,overlap=200){ const out=[]; let i=0; while(i<text.length){ let end=Math.min(text.length,i+size); if(end<text.length){const dot=text.lastIndexOf(". ",end); if(dot>i+size*0.5) end=dot+1;} out.push(text.slice(i,end).trim()); if(end>=text.length)break; i=Math.max(end-overlap,i+1);} return out; }
+function rebuildKB(){ chunks=POLICIES.flatMap(p=>split(p.text).map(t=>({src:p.title,t}))); $("#chunkCount").textContent=chunks.length+" chunks";
+  $("#docs").innerHTML=POLICIES.map(p=>`<div class="doc"><div class="ic">${p.user?"TXT":"PDF"}</div><div><b>${esc(p.title)}</b><span>${split(p.text).length} chunk${split(p.text).length>1?"s":""} · ${p.user?"added by you":"sample policy"}</span></div><span class="pill ok">indexed</span></div>`).join(""); }
+rebuildKB();
+const STOP=new Set("a an the is are am do does did i my me we our you your to of in on for and or can how what when where which who whom with at by be if it as from there this that will would should could much many any per get have has".split(" "));
+const SYN={vacation:"leave",holiday:"leave",holidays:"leave","days off":"leave",annual:"leave",wfh:"remote",home:"remote",remotely:"remote",sick:"sick",ill:"sick",refund:"reimbursed",reimburse:"reimbursed",reimbursement:"reimbursed",claim:"expenses",expense:"expenses",taxi:"taxi",uber:"ride-hailing",careem:"ride-hailing",food:"meal",lunch:"meal",baby:"maternity",pregnant:"maternity",father:"paternity",course:"training",certification:"training",hours:"hours",ramadan:"ramadan",overtime:"overtime",internet:"internet",carry:"carried"};
+const norm=w=>{w=w.toLowerCase().replace(/[^a-z0-9\-]/g,""); if(SYN[w]) return SYN[w]; return w.length>4?w.replace(/(ing|ed|es|s)$/,""):w;};
+const terms=q=>q.split(/\s+/).map(norm).filter(w=>w&&!STOP.has(w));
+function retrieve(q){ const qt=terms(q); return chunks.map(c=>{const ct=terms(c.t);const hit=qt.filter(t=>ct.includes(t)||ct.some(x=>x.startsWith(t)&&t.length>3));return{...c,score:qt.length?hit.length/qt.length:0,hit}}).filter(c=>c.score>0).sort((a,b)=>b.score-a.score).slice(0,3); }
+function answer(q,hits){
+  if(!hits.length||hits[0].score<0.34) return {html:`I couldn't find this in the company policies. Please contact HR at hr@company.com.`,src:""};
+  const qt=terms(q); const top=hits[0];
+  const sents=hits.filter(h=>h.src===top.src).flatMap(h=>h.t.split(/(?<=\.)\s+/));
+  const scored=[...new Set(sents)].map(s=>({s,n:qt.filter(t=>terms(s).some(x=>x===t||x.startsWith(t))).length})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n).slice(0,3);
+  const keep=sents.filter(s=>scored.some(x=>x.s===s));
+  return {html: keep.length>1?`<ul>${[...new Set(keep)].map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`:esc(keep[0]||top.t.split(/(?<=\.)\s+/)[0]), src:top.src};
+}
+function addMsg(role,html,src){ const d=document.createElement("div"); d.className="msg "+role; d.innerHTML=html+(src?`<span class="src">Source: ${esc(src)}</span>`:""); $("#msgs").appendChild(d); $("#msgs").scrollTop=1e6; return d; }
+function showHits(hits,q){ const qt=terms(q); $("#hits").innerHTML=hits.length?hits.map(h=>`<div class="hit"><header><span>${esc(h.src)}</span><span>match ${(h.score*100).toFixed(0)}%</span></header>${h.t.split(/(\s+)/).map(w=>qt.includes(norm(w))?`<mark>${esc(w)}</mark>`:esc(w)).join("")}<div class="simbar"><span style="width:${h.score*100}%"></span></div></div>`).join(""):`<p class="note">No chunk matched, so the assistant falls back to “contact HR”.</p>`; }
+const sessionId="web-"+Math.random().toString(36).slice(2,10);
+async function ask(q){
+  addMsg("me",esc(q)); const t=addMsg("bot",`<span class="typing"><i></i><i></i><i></i></span>`);
+  if(LIVE){ try{ const r=await fetch(CONFIG.n8nBase+CONFIG.chat,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"sendMessage",sessionId,chatInput:q})}); const j=await r.json(); t.innerHTML=esc(j.output||j.text||JSON.stringify(j)).replace(/\n/g,"<br>"); $("#hits").innerHTML=`<p class="note">In live mode the n8n agent does the retrieval with Gemini embeddings.</p>`; return; }
+    catch(e){ t.innerHTML=`The assistant couldn't be reached. Check that the workflow is active and that this site is in the chat trigger's Allowed Origins. Showing the demo answer instead.`; } }
+  const hits=retrieve(q); await sleep(650); showHits(hits,q); const a=answer(q,hits); if(LIVE) addMsg("bot",a.html,a.src); else { t.innerHTML=a.html+(a.src?`<span class="src">Source: ${esc(a.src)}</span>`:""); }
+}
+const SUGG=["How many annual leave days do I get?","Can I work from home?","What is the meal allowance when travelling?","Do I need a medical certificate for sick leave?","What's the company car policy?"];
+$("#suggest").innerHTML=SUGG.map(s=>`<button type="button">${esc(s)}</button>`).join("");
+$("#suggest").querySelectorAll("button").forEach(b=>b.onclick=()=>ask(b.textContent));
+$("#chatForm").addEventListener("submit",e=>{e.preventDefault();const q=$("#chatIn").value.trim();if(!q)return;$("#chatIn").value="";ask(q)});
+addMsg("bot",`Hi! I answer from Horizon Byte's HR policies and always tell you which policy the answer comes from. Ask me about leave, remote work, expenses or working hours.`);
+if(LIVE){$("#chatMode").className="pill ok";$("#chatMode").lastChild.textContent="Connected to n8n";const pl=$("#policyLive");pl.hidden=false;pl.href=CONFIG.n8nBase+CONFIG.policyForm}
+$("#policyFile").onchange=async e=>{const f=e.target.files[0]; if(!f) return; const text=(await f.text()).replace(/\s+/g," ").trim(); if(text.length<40){toast("That file looks empty.");return} POLICIES.push({title:f.name.replace(/\.txt$/i,""),text,user:true}); rebuildKB(); toast(`Added ${f.name}: ${split(text).length} chunks`); e.target.value=""};
+
+/* ============ Error handler ============ */
+const RULES=[
+ {type:"auth",severity:"critical",pattern:/401|403|unauthori[sz]ed|forbidden|invalid_grant|invalid credentials|token (has )?expired|reauthori|access denied/,fix:"Reconnect the credential used by this node (Credentials, then Reconnect), then retry the execution. Retrying alone will not help."},
+ {type:"rate_limit",severity:"warning",pattern:/429|rate limit|too many requests|quota|resource has been exhausted/,fix:"Temporary. The next scheduled run usually succeeds. If it keeps happening, run the batch less often or upgrade the API plan."},
+ {type:"network",severity:"warning",pattern:/timeout|timed out|etimedout|econnreset|econnrefused|enotfound|socket hang up|\b50[234]\b|service unavailable|bad gateway/,fix:"Temporary network or service problem. Retry the execution; check the service status page if it repeats."},
+ {type:"ai_output",severity:"warning",pattern:/output parser|could not parse|parseable|unexpected token|json|schema/,fix:"The AI returned an unexpected format. Retry once; if it repeats, tighten the prompt or the output schema."},
+ {type:"data",severity:"critical",pattern:/cannot read propert|undefined|is not defined|not found|no column|missing|invalid syntax|expression|does not exist/,fix:"Data or workflow bug. Open the execution, find the input that broke this node, fix the data or the expression, then retry."},
+];
+const PRESETS=[
+ ["Drive token expired","invalid_grant: Token has been expired or revoked.","Download CV"],
+ ["Groq rate limit","429 Too Many Requests: rate limit reached for model openai/gpt-oss-120b","Score Candidate"],
+ ["Network timeout","ETIMEDOUT while connecting to generativelanguage.googleapis.com","OCR Scanned CV"],
+ ["Broken AI JSON","Could not parse LLM output: Unexpected token } in JSON at position 212","Score Candidate"],
+ ["Missing column","Cannot read properties of undefined (reading 'Applied At')","Get New Applications"],
+];
+let errLog=[]; let preset=PRESETS[0];
+$("#errPresets").innerHTML=PRESETS.map((p,i)=>`<button class="btn ghost sm" type="button" data-p="${i}">${esc(p[0])}</button>`).join("");
+$("#errPresets").querySelectorAll("button").forEach(b=>b.onclick=()=>{preset=PRESETS[b.dataset.p];$("#errMsg").value=preset[1]});
+$("#errMsg").value=PRESETS[0][1];
+function classify(message,workflow,node){
+  const text=message.toLowerCase(); const rule=RULES.find(r=>r.pattern.test(text))||{type:"unknown",severity:"critical",fix:"Unrecognised error. Open the execution and read the full error."};
+  const severity=/intake/i.test(workflow)?"critical":rule.severity;
+  return {time:clock,workflow,node,type:rule.type,severity,message,fix:rule.fix,fingerprint:[workflow,node,rule.type].join(" | ")};
+}
+$("#fire").onclick=()=>{
+  const msg=$("#errMsg").value.trim()||"No error message"; const wf=$("#errWf").value; const node=PRESETS.find(p=>p[1]===msg)?.[2]||"Code";
+  const err=classify(msg,wf,node);
+  const recent=errLog.some(r=>r.fingerprint===err.fingerprint&&r.alerted==="yes"&&err.time-r.time<60);
+  err.alerted=err.severity==="critical"?(recent?"throttled":"yes"):"digest only"; err.status="open"; errLog.unshift(err); renderErr();
+  const sev=err.severity==="critical"?"bad":"warn";
+  $("#classOut").innerHTML=`<div class="classified"><div class="row"><span class="pill ${sev}"><span class="dot"></span>${err.severity}</span><span class="pill mono">${err.type}</span><span class="pill ${err.alerted==="yes"?"bad":"slate"}">${err.alerted==="yes"?"email sent now":err.alerted==="throttled"?"throttled · already emailed this hour":"waits for 8 AM digest"}</span></div>${/intake/i.test(wf)&&RULES.find(r=>r.pattern.test(msg.toLowerCase()))?.severity==="warning"?`<span class="note">Raised to critical: intake failures affect candidates directly.</span>`:""}<div class="fix"><b>What to do:</b> ${esc(err.fix)}</div>${err.alerted==="yes"?`<button class="btn ghost sm" type="button" id="seeAlert" style="align-self:start">See the alert email</button>`:""}</div>`;
+  if(err.alerted==="yes") $("#seeAlert").onclick=()=>openMail({to:HR_EMAIL,color:"#B91C1C",subject:`[CRITICAL] ${err.workflow} failed at ${err.node} (${err.type})`,html:shell("#B91C1C","Critical workflow error",esc(err.workflow)+" failed",`<p><b>Workflow:</b> ${esc(err.workflow)}<br><b>Failed node:</b> ${esc(err.node)}<br><b>Type:</b> ${err.type} &middot; <b>Severity:</b> ${err.severity}<br><b>Time:</b> ${fmtClock(err.time)}</p><p><b>Error:</b> ${esc(err.message)}</p><p style="background:#FEF3C7;padding:12px;border-radius:8px;"><b>What to do:</b> ${esc(err.fix)}</p><p style="color:#6b7280;font-size:13px;">Repeats of this problem in the next 60 minutes are logged but not emailed. When fixed, set its Status to <b>resolved</b> in the Error Log sheet.</p>`,"Automation Monitoring")});
+};
+function renderErr(){
+  $("#errBody").innerHTML=errLog.length?errLog.map((r,i)=>`<tr><td class="tnum">${fmtClock(r.time)}</td><td>${esc(r.workflow.replace(/ \(.*\)/,""))}</td><td>${esc(r.node)}</td><td class="mono">${r.type}</td><td><span class="pill ${r.severity==="critical"?"bad":"warn"}">${r.severity}</span></td><td>${r.alerted}</td><td>${r.status==="open"?`<button class="btn ghost sm" type="button" data-res="${i}">Mark resolved</button>`:`<span class="pill ok">resolved</span>`}</td></tr>`).join(""):`<tr><td colspan="7" class="note" style="cursor:default">No errors logged. Trigger one above.</td></tr>`;
+  $("#errBody").querySelectorAll("[data-res]").forEach(b=>b.onclick=e=>{e.stopPropagation();errLog[b.dataset.res].status="resolved";renderErr();toast("Marked resolved")});
+  digestSummary();
+}
+function digestData(){ const last24=errLog.filter(r=>clock-r.time<=1440), open=errLog.filter(r=>r.status==="open");
+  const byType=Object.entries(last24.reduce((a,r)=>(a[r.type]=(a[r.type]||0)+1,a),{})).sort((a,b)=>b[1]-a[1]);
+  const groups=Object.values(open.reduce((a,r)=>{a[r.fingerprint]=a[r.fingerprint]||{...r,times:0};a[r.fingerprint].times++;return a},{}));
+  return {last24,open,byType,groups,critical:last24.filter(r=>r.severity==="critical").length}; }
+function digestSummary(){ const d=digestData(); $("#digestSum").innerHTML=`<div><b class="tnum">${d.last24.length}</b> errors in the last 24 h (${d.critical} critical)</div><div><b class="tnum">${d.groups.length}</b> distinct problem${d.groups.length===1?"":"s"} still open</div>`; }
+$("#digest").onclick=()=>{ const d=digestData(); if(!d.last24.length&&!d.open.length){toast("Nothing to report today, so no email is sent.");return}
+  openMail({to:HR_EMAIL,color:"#1D4ED8",subject:`Daily error digest: ${d.last24.length} new, ${d.open.length} open`,html:shell("#1D4ED8","Daily digest","Automation health report",`<p><b>Last 24 hours:</b> ${d.last24.length} errors (${d.critical} critical)</p><ul>${d.byType.map(([t,n])=>`<li><b>${t}</b>: ${n}</li>`).join("")||"<li>None</li>"}</ul><p><b>Still open (${d.open.length}):</b></p><ul>${d.groups.map(g=>`<li><b>${esc(g.workflow)}</b> at ${esc(g.node)} (${g.type}, ${g.severity}) &times;${g.times}<br><span style="color:#6b7280;">${esc(g.message)}</span><br><i>${esc(g.fix)}</i></li>`).join("")||"<li>Nothing open. Good job.</li>"}</ul>`,"Automation Monitoring")}); };
+
+function heartbeat(show){
+  const stuck=apps.filter(a=>a.status==="new"&&clock-a.appliedMin>180); const oldest=stuck.length?Math.round(Math.max(...stuck.map(a=>(clock-a.appliedMin)/60))):0;
+  const h=$("#heart"); h.className="heart"+(stuck.length?" stuck":"");
+  h.innerHTML=`<svg width="34" height="30" viewBox="0 0 24 22" aria-hidden="true"><path class="${stuck.length?"pulse":""}" d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z" fill="${stuck.length?"var(--warn)":"var(--ok)"}"/></svg><div>${stuck.length?`<b>The recruitment queue is not moving</b><div class="note">${stuck.length} application${stuck.length>1?"s":""} waiting over 3 hours (oldest ${oldest} h): ${stuck.map(a=>esc(a.name)).join(", ")}</div>`:`<b>Queue is moving</b><div class="note">Nothing has waited in “new” for more than 3 hours.</div>`}</div>`;
+  if(show&&stuck.length){ errLog.unshift({time:clock,workflow:"Recruitment 2 - Batch Evaluation (AI Screening)",node:"Heartbeat",type:"heartbeat",severity:"critical",message:`${stuck.length} applications waiting more than 3 hours`,fix:"Check that Workflow 2 is active and its last executions succeeded, then run the batch.",fingerprint:"Recruitment 2 - Batch Evaluation (AI Screening) | Heartbeat | heartbeat",alerted:"yes",status:"open"}); renderErr(); toast("Heartbeat alert emailed and logged"); }
+  else if(show) toast("Heartbeat OK, no email");
+}
+$("#beat").onclick=()=>heartbeat(true);
+$("#adv").onclick=()=>{clock+=60;tick();renderSheet();heartbeat(false);toast("Clock moved to "+fmtClock(clock))};
+
+/* ============ workflow explorer ============ */
+const CAT={trigger:["var(--sun)","T"],ai:["var(--accent)","AI"],code:["var(--slate)","JS"],logic:["var(--warn)","IF"],data:["var(--ok)","DB"],msg:["var(--bad)","@"]};
+const WF_ORDER=[["coach","Prepare · Coach"],["rag","Ask · Policy RAG"],["intake","Apply · Intake"],["batch","Evaluate · Screening"],["errors","Error handler"]];
+let wfCur="batch";
+function wrapLabel(s,max=19){ const w=s.split(" "); const lines=[""]; for(const x of w){ if((lines.at(-1)+" "+x).trim().length>max&&lines.at(-1)) lines.push(x); else lines[lines.length-1]=(lines.at(-1)+" "+x).trim(); } if(lines.length>2){lines.length=2;lines[1]=lines[1].slice(0,max-1)+"…"} return lines; }
+function drawWF(key){
+  wfCur=key; const g=GRAPH[key]; if(!g) return;
+  document.querySelectorAll("#wfTabs .tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.k===key));
+  const W=152,H=56,SX=1.22,SY=1.18,P=50;
+  const xs=g.nodes.map(n=>n.x*SX), ys=g.nodes.map(n=>n.y*SY); const minX=Math.min(...xs),minY=Math.min(...ys);
+  const pos={}; g.nodes.forEach(n=>pos[n.n]={x:n.x*SX-minX+P,y:n.y*SY-minY+P,n});
+  const w=Math.max(...Object.values(pos).map(p=>p.x))+W+P, h=Math.max(...Object.values(pos).map(p=>p.y))+H+P;
+  let edges="",labels="";
+  for(const [s,t,ai,lab] of g.edges){ const a=pos[s],b=pos[t]; if(!a||!b) continue; let d;
+    if(ai){ const x1=a.x+W/2,y1=a.y,x2=b.x+W/2,y2=b.y+H; d=`M${x1},${y1} C${x1},${y1-40} ${x2},${y2+40} ${x2},${y2}`; }
+    else { const x1=a.x+W,y1=a.y+H/2,x2=b.x,y2=b.y+H/2;
+      if(x2>x1+10){ const c=Math.max(40,(x2-x1)/2); d=`M${x1},${y1} C${x1+c},${y1} ${x2-c},${y2} ${x2},${y2}`; }
+      else { const low=Math.max(a.y,b.y)+H+40; d=`M${x1},${y1} C${x1+60},${y1} ${x1+60},${low} ${x1},${low} L${x2},${low} C${x2-60},${low} ${x2-60},${y2} ${x2},${y2}`; }
+      if(lab) labels+=`<text class="elab" x="${x1+6}" y="${y1-6}">${esc(lab)}</text>`; }
+    edges+=`<path class="edge${ai?" ai":""}" d="${d}"/>`; }
+  const nodes=g.nodes.map(n=>{const p=pos[n.n];const [col,gl]=CAT[n.c]||CAT.code;const L=wrapLabel(n.n);
+    return `<g class="node" tabindex="0" role="button" aria-label="${esc(n.n)}" data-n="${esc(n.n)}" transform="translate(${p.x},${p.y})"><rect class="box" width="${W}" height="${H}" rx="10"/><rect x="9" y="${H/2-11}" width="22" height="22" rx="6" fill="${col}" opacity=".16"/><text class="gl" x="20" y="${H/2+3}" text-anchor="middle" fill="${col}">${gl}</text>${L.map((l,i)=>`<text x="38" y="${(L.length===1?24:18)+i*13}">${esc(l)}</text>`).join("")}<text class="ty" x="38" y="${H-9}">${esc(n.t)}</text></g>`}).join("");
+  $("#canvas").innerHTML=`<svg width="${Math.round(w*.82)}" height="${Math.round(h*.82)}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(g.name)} workflow graph">${edges}${labels}${nodes}</svg>`;
+  $("#canvas").querySelectorAll(".node").forEach(el=>{const f=()=>inspect(key,el.dataset.n,el);el.onclick=f;el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();f()}}});
+  inspectWF(key);
+}
+function inspectWF(key){ const g=GRAPH[key]; const trig=g.nodes.filter(n=>n.c==="trigger").map(n=>n.t);
+  $("#inspect").innerHTML=`<div class="eyebrow">Workflow</div><h3 style="font-size:1.25rem">${esc(g.name)}</h3><div class="tags"><span class="pill">${g.nodes.length} nodes</span>${[...new Set(trig)].map(t=>`<span class="pill">${esc(t)}</span>`).join("")}</div><p class="note">Click a node in the canvas to read what it does. Dashed lines are AI sub-connections (models, parsers, tools).</p><a class="btn ghost sm" style="align-self:start" href="${esc(g.file)}" download>Download workflow JSON</a>`; }
+function inspect(key,name,el){ const n=GRAPH[key].nodes.find(x=>x.n===name); document.querySelectorAll(".node.sel").forEach(x=>x.classList.remove("sel")); el.classList.add("sel");
+  const ins=GRAPH[key].edges.filter(e=>e[1]===name).map(e=>e[0]), outs=GRAPH[key].edges.filter(e=>e[0]===name).map(e=>e[1]+(e[3]?` (${e[3]})`:""));
+  $("#inspect").innerHTML=`<div class="eyebrow">${esc(n.t)}</div><h3 style="font-size:1.25rem">${esc(n.n)}</h3><p style="font-size:.95rem">${esc(n.d||"")}</p>${n.e.length?`<div class="tags">${n.e.map(x=>`<span class="pill warn">${esc(x)}</span>`).join("")}</div>`:""}${ins.length?`<div><div class="eyebrow" style="margin-bottom:6px">From</div><div class="note">${ins.map(esc).join("<br>")}</div></div>`:""}${outs.length?`<div><div class="eyebrow" style="margin-bottom:6px">To</div><div class="note">${outs.map(esc).join("<br>")}</div></div>`:""}<button class="btn ghost sm" type="button" style="align-self:start" id="backWF">Back to workflow</button>`;
+  $("#backWF").onclick=()=>{el.classList.remove("sel");inspectWF(key)}; }
+$("#wfTabs").innerHTML=WF_ORDER.map(([k,l])=>`<button class="tab" role="tab" type="button" data-k="${k}">${esc(l)}</button>`).join("");
+$("#wfTabs").querySelectorAll(".tab").forEach(t=>t.onclick=()=>drawWF(t.dataset.k));
+drawWF("batch");
+
+/* ============ hero horizon ============ */
+function drawHorizon(){
+  const c=$("#horizon"); const dpr=Math.min(2,devicePixelRatio||1); const W=c.clientWidth,H=c.clientHeight; if(!W) return; c.width=W*dpr;c.height=H*dpr; const x=c.getContext("2d"); x.scale(dpr,dpr);
+  const cs=getComputedStyle(document.documentElement); const line=cs.getPropertyValue("--line").trim(), sun=cs.getPropertyValue("--sun").trim(), acc=cs.getPropertyValue("--accent").trim();
+  drawHorizon.state={x,W,H,line,sun,acc};
+}
+let t0=performance.now();
+function frame(now){ const s=drawHorizon.state; if(s){ const {x,W,H,line,sun,acc}=s; x.clearRect(0,0,W,H);
+  const hy=H-46; for(let i=0;i<7;i++){ const y=hy+6+i*i*1.6; x.strokeStyle=line; x.globalAlpha=1-i*.12; x.lineWidth=1; x.beginPath(); x.moveTo(0,y); x.lineTo(W,y); x.stroke(); }
+  x.globalAlpha=1; x.strokeStyle=line; x.lineWidth=1.5; x.beginPath(); x.moveTo(0,hy); x.lineTo(W,hy); x.stroke();
+  const t=(now-t0)/1000; const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  for(let k=0;k<5;k++){ const p=reduce?(.15+k*.18):((t*.06+k/5)%1); const px=p*W; const py=hy; x.fillStyle=k===2?sun:acc; x.globalAlpha=Math.sin(p*Math.PI)*.9; x.beginPath(); x.arc(px,py,3.2,0,Math.PI*2); x.fill(); x.globalAlpha=Math.sin(p*Math.PI)*.18; x.beginPath(); x.arc(px,py,9,0,Math.PI*2); x.fill(); }
+  x.globalAlpha=1; }
+  requestAnimationFrame(frame); }
+drawHorizon(); addEventListener("resize",drawHorizon); matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",drawHorizon); requestAnimationFrame(frame);
+
+tick(); renderSheet(); renderErr(); heartbeat(false); route();
+</script>
+
+</body>
+</html>

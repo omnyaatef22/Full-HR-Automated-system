@@ -1,0 +1,882 @@
+{
+  "name": "Recruitment 3 - Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "63192e85-98e1-481e-ae09-317b7a1af73e",
+      "name": "On Workflow Error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turn the raw error into a classified record: what broke, how bad it is, and what to do.\nconst e = $input.first().json;\nconst message = String(e.execution?.error?.message || e.trigger?.error?.message || 'No error message');\nconst description = String(e.execution?.error?.description || e.trigger?.error?.description || '');\nconst workflow = e.workflow?.name || 'Unknown workflow';\nconst node = e.execution?.lastNodeExecuted || e.trigger?.node?.name || 'Trigger';\nconst text = (message + ' ' + description).toLowerCase();\n\n// First matching rule wins, so the most specific rules come first.\nconst rules = [\n  { type: 'auth', severity: 'critical',\n    pattern: /401|403|unauthori[sz]ed|forbidden|invalid_grant|invalid credentials|token (has )?expired|reauthori|access denied/,\n    fix: 'Reconnect the credential used by this node (Credentials, then Reconnect), then retry the execution. Retrying alone will not help.' },\n  { type: 'rate_limit', severity: 'warning',\n    pattern: /429|rate limit|too many requests|quota|resource has been exhausted/,\n    fix: 'Temporary. The next scheduled run usually succeeds. If it keeps happening, run the batch less often or upgrade the API plan.' },\n  { type: 'network', severity: 'warning',\n    pattern: /timeout|timed out|etimedout|econnreset|econnrefused|enotfound|socket hang up|\\b50[234]\\b|service unavailable|bad gateway/,\n    fix: 'Temporary network or service problem. Retry the execution; check the service status page if it repeats.' },\n  { type: 'ai_output', severity: 'warning',\n    pattern: /output parser|could not parse|parseable|unexpected token|json|schema/,\n    fix: 'The AI returned an unexpected format. Retry once; if it repeats, tighten the prompt or the output schema.' },\n  { type: 'data', severity: 'critical',\n    pattern: /cannot read propert|undefined|is not defined|not found|no column|missing|invalid syntax|expression|does not exist/,\n    fix: 'Data or workflow bug. Open the execution, find the input that broke this node, fix the data or the expression, then retry.' },\n];\nconst rule = rules.find(r => r.pattern.test(text)) ||\n  { type: 'unknown', severity: 'critical', fix: 'Unrecognised error. Open the execution and read the full error.' };\n\n// Business rule: anything failing in Intake affects candidates directly, so it is always critical.\nconst severity = /intake/i.test(workflow) ? 'critical' : rule.severity;\n\nreturn [{ json: {\n  time: $now.setZone('Africa/Cairo').toFormat('yyyy-MM-dd HH:mm'),\n  epochMinute: Math.floor(Date.now() / 60000),\n  workflow, node, type: rule.type, severity,\n  message: message.slice(0, 500), fix: rule.fix,\n  executionId: String(e.execution?.id ?? ''),\n  executionUrl: e.execution?.url || '',\n  fingerprint: [workflow, node, rule.type].join(' | '),\n} }];"
+      },
+      "id": "f4b653db-efb1-43df-9eb3-1fcd6333f970",
+      "name": "Classify Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_ERROR_LOG_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 2127425649,
+          "cachedResultName": "Untitled",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_ERROR_LOG_SHEET_ID/edit#gid=2127425649"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Fingerprint",
+              "lookupValue": "={{ $json.fingerprint }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "61949295-9243-4f28-8dc2-1c080bc589a8",
+      "name": "Get Recent Alerts",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ALERT THROTTLING: one email per problem per hour, not one per failure.\nconst err = $('Classify Error').first().json;\nconst WINDOW_MINUTES = 60;\nconst num = v => Number(String(v ?? '').replace(/,/g, ''));\n\nconst alertedRecently = $input.all().some(r =>\n  r.json.Fingerprint === err.fingerprint &&\n  r.json.Alerted === 'yes' &&\n  err.epochMinute - num(r.json['Epoch Minute']) < WINDOW_MINUTES);\n\n// Critical errors email now (unless throttled); warnings wait for the daily digest.\nlet alerted = 'digest only';\nif (err.severity === 'critical') alerted = alertedRecently ? 'throttled' : 'yes';\n\nreturn [{ json: { ...err, alerted, sendNow: alerted === 'yes' } }];"
+      },
+      "id": "57be436a-1da8-4d69-8aee-dbdd014221c4",
+      "name": "Check Throttle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_ERROR_LOG_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 2127425649,
+          "cachedResultName": "Untitled",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_ERROR_LOG_SHEET_ID/edit#gid=2127425649"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Time": "={{ $json.time }}",
+            "Workflow": "={{ $json.workflow }}",
+            "Node": "={{ $json.node }}",
+            "Type": "={{ $json.type }}",
+            "Severity": "={{ $json.severity }}",
+            "Message": "={{ $json.message }}",
+            "Suggested Fix": "={{ $json.fix }}",
+            "Execution ID": "={{ $json.executionId }}",
+            "Execution Link": "={{ $json.executionUrl }}",
+            "Fingerprint": "={{ $json.fingerprint }}",
+            "Epoch Minute": "={{ $json.epochMinute }}",
+            "Alerted": "={{ $json.alerted }}",
+            "Status": "open"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Time",
+              "displayName": "Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Node",
+              "displayName": "Node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Suggested Fix",
+              "displayName": "Suggested Fix",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Execution Link",
+              "displayName": "Execution Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fingerprint",
+              "displayName": "Fingerprint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Epoch Minute",
+              "displayName": "Epoch Minute",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Alerted",
+              "displayName": "Alerted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "45570965-97d0-490e-b178-b5c9c18b7149",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        880,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0a08aceb-ed51-4f73-ab23-f72e55df3e1d",
+              "leftValue": "={{ $('Check Throttle').first().json.sendNow }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "a6fcc660-27c1-4e1e-a021-ba244eaf35cf",
+      "name": "Alert Now?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "hr@your-company.com",
+        "subject": "=[CRITICAL] {{ $('Check Throttle').first().json.workflow }} failed at {{ $('Check Throttle').first().json.node }} ({{ $('Check Throttle').first().json.type }})",
+        "message": "=<div style=\"background:#f4f5f7;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;\"><tr><td style=\"background:#B91C1C;padding:24px 32px;color:#ffffff;\"><div style=\"font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.85;\">Critical workflow error</div><div style=\"font-size:22px;font-weight:bold;margin-top:6px;\">{{ $('Check Throttle').first().json.workflow }} failed</div></td></tr><tr><td style=\"padding:26px 32px;color:#1f2937;font-size:15px;line-height:1.6;\"><p><b>Workflow:</b> {{ $('Check Throttle').first().json.workflow }}<br><b>Failed node:</b> {{ $('Check Throttle').first().json.node }}<br><b>Type:</b> {{ $('Check Throttle').first().json.type }} &middot; <b>Severity:</b> {{ $('Check Throttle').first().json.severity }}<br><b>Time:</b> {{ $('Check Throttle').first().json.time }}</p><p><b>Error:</b> {{ $('Check Throttle').first().json.message }}</p><p style=\"background:#FEF3C7;padding:12px;border-radius:8px;\"><b>What to do:</b> {{ $('Check Throttle').first().json.fix }}</p>{{ $('Check Throttle').first().json.executionUrl ? '<p><a href=\"' + $('Check Throttle').first().json.executionUrl + '\" style=\"background:#B91C1C;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;\">Open the failed execution</a></p>' : '' }}<p style=\"color:#6b7280;font-size:13px;\">Repeats of this problem in the next 60 minutes are logged but not emailed. When fixed, set its Status to <b>resolved</b> in the Error Log sheet.</p></td></tr><tr><td style=\"padding:14px 32px;background:#f9fafb;color:#9ca3af;font-size:12px;text-align:center;\">Horizon Byte Solutions &middot; Automation Monitoring</td></tr></table></div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "30a07043-4a4d-4bb1-93bf-b876501a4650",
+      "name": "Alert Admin",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1328,
+        -80
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "c0253bb6-d4b7-467e-a419-6501c2311770",
+      "name": "Every Morning 8 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_ERROR_LOG_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 2127425649,
+          "cachedResultName": "Untitled",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_ERROR_LOG_SHEET_ID/edit#gid=2127425649"
+        },
+        "options": {}
+      },
+      "id": "781691ec-2c17-4465-9026-3be93f4cb47a",
+      "name": "Get Error Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        304
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// DAILY DIGEST: one summary of the last 24 hours plus everything still open.\nconst num = v => Number(String(v ?? '').replace(/,/g, ''));\nconst nowMin = Math.floor(Date.now() / 60000);\nconst rows = $input.all().map(i => i.json).filter(r => r.Fingerprint);\nconst last24 = rows.filter(r => nowMin - num(r['Epoch Minute']) <= 1440);\nconst open = rows.filter(r => String(r.Status || '').toLowerCase() === 'open');\n\nconst count = (list, key) => list.reduce((acc, r) => { acc[r[key]] = (acc[r[key]] || 0) + 1; return acc; }, {});\nconst byType = Object.entries(count(last24, 'Type')).sort((a, b) => b[1] - a[1]);\nconst groups = Object.values(open.reduce((acc, r) => {\n  acc[r.Fingerprint] = acc[r.Fingerprint] || { ...r, times: 0 };\n  acc[r.Fingerprint].times++;\n  return acc;\n}, {}));\n\nconst esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst typeRows = byType.map(([t, n]) => `<li><b>${esc(t)}</b>: ${n}</li>`).join('') || '<li>None</li>';\nconst openRows = groups.map(g =>\n  `<li><b>${esc(g.Workflow)}</b> at ${esc(g.Node)} (${esc(g.Type)}, ${esc(g.Severity)}) &times;${g.times}<br><span style=\"color:#6b7280;\">${esc(g.Message)}</span><br><i>${esc(g['Suggested Fix'])}</i></li>`).join('');\n\nreturn [{ json: {\n  hasNews: last24.length > 0 || open.length > 0,\n  total24h: last24.length,\n  critical24h: last24.filter(r => r.Severity === 'critical').length,\n  openCount: open.length,\n  typeListHtml: typeRows,\n  openListHtml: openRows || '<li>Nothing open. Good job.</li>',\n} }];"
+      },
+      "id": "e2da6e18-dfde-423b-b429-10330d168e83",
+      "name": "Build Digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4f31d0ca-e574-41eb-9d21-54ac4522abcc",
+              "leftValue": "={{ $json.hasNews }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "486cd621-4b26-4694-9453-164924437436",
+      "name": "Anything to Report?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "hr@your-company.com",
+        "subject": "=Daily error digest: {{ $json.total24h }} new, {{ $json.openCount }} open",
+        "message": "=<div style=\"background:#f4f5f7;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;\"><tr><td style=\"background:#1D4ED8;padding:24px 32px;color:#ffffff;\"><div style=\"font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.85;\">Daily digest</div><div style=\"font-size:22px;font-weight:bold;margin-top:6px;\">Automation health report</div></td></tr><tr><td style=\"padding:26px 32px;color:#1f2937;font-size:15px;line-height:1.6;\"><p><b>Last 24 hours:</b> {{ $json.total24h }} errors ({{ $json.critical24h }} critical)</p><ul>{{ $json.typeListHtml }}</ul><p><b>Still open ({{ $json.openCount }}):</b></p><ul>{{ $json.openListHtml }}</ul><p style=\"color:#6b7280;font-size:13px;\">Mark fixed problems as <b>resolved</b> in the <a href=\"https://docs.google.com/spreadsheets/d/YOUR_ERROR_LOG_SHEET_ID/edit\">Error Log</a>.</p></td></tr><tr><td style=\"padding:14px 32px;background:#f9fafb;color:#9ca3af;font-size:12px;text-align:center;\">Horizon Byte Solutions &middot; Automation Monitoring</td></tr></table></div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "4e4f25b1-4408-48d0-a19b-84665fc9ca63",
+      "name": "Send Daily Digest",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        224
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "b56dc7f9-ca85-4a18-9ff3-f835761b1009",
+      "name": "Every 2 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_APPLICATIONS_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 706263942,
+          "cachedResultName": "Untitled",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_APPLICATIONS_SHEET_ID/edit#gid=706263942"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "new"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d65885d6-698d-4f26-901a-6c98806f83e3",
+      "name": "Get Waiting Applications",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        560
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// HEARTBEAT (dead-man's switch): alerts when nothing happened, which no Error Trigger can see.\n// If applications wait in Status \"new\" for too long, the batch workflow is not running.\nconst MAX_WAIT_HOURS = 3;\nconst now = DateTime.now().setZone('Africa/Cairo');\nconst parse = s => {\n  s = String(s || '').trim();\n  for (const f of ['yyyy-MM-dd HH:mm', 'yyyy-MM-dd HH:mm:ss', 'M/d/yyyy H:mm:ss', 'M/d/yyyy H:mm']) {\n    const d = DateTime.fromFormat(s, f, { zone: 'Africa/Cairo' });\n    if (d.isValid) return d;\n  }\n  const t = Date.parse(s);\n  return isNaN(t) ? null : DateTime.fromMillis(t);\n};\n\nconst stuck = $input.all().map(i => i.json)\n  .filter(r => String(r.Status || '').toLowerCase() === 'new')\n  .map(r => ({ name: r.Name, position: r.Position, applied: parse(r['Applied At']) }))\n  .filter(r => r.applied && now.diff(r.applied, 'hours').hours > MAX_WAIT_HOURS);\n\nconst oldestHours = stuck.length ? Math.round(Math.max(...stuck.map(r => now.diff(r.applied, 'hours').hours))) : 0;\nreturn [{ json: {\n  isStuck: stuck.length > 0,\n  stuckCount: stuck.length,\n  oldestHours,\n  listHtml: stuck.slice(0, 10).map(r => `<li>${r.name} (${r.position}), applied ${r.applied.toFormat('yyyy-MM-dd HH:mm')}</li>`).join(''),\n  time: now.toFormat('yyyy-MM-dd HH:mm'),\n  epochMinute: Math.floor(Date.now() / 60000),\n} }];"
+      },
+      "id": "3e18db5f-2c4d-4359-bef0-7a52ea2a9c3d",
+      "name": "Find Stuck Applications",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "74eab91a-7580-4ca7-98fe-d83182a0a139",
+              "leftValue": "={{ $json.isStuck }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "dab567f2-2505-47d7-84da-b8df4175f332",
+      "name": "Queue Stuck?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "hr@your-company.com",
+        "subject": "=[HEARTBEAT] {{ $json.stuckCount }} applications waiting more than 3 hours",
+        "message": "=<div style=\"background:#f4f5f7;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;\"><tr><td style=\"background:#B45309;padding:24px 32px;color:#ffffff;\"><div style=\"font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.85;\">Heartbeat check</div><div style=\"font-size:22px;font-weight:bold;margin-top:6px;\">The recruitment queue is not moving</div></td></tr><tr><td style=\"padding:26px 32px;color:#1f2937;font-size:15px;line-height:1.6;\"><p><b>{{ $json.stuckCount }}</b> application(s) have been waiting in Status <b>new</b> for more than 3 hours (oldest: {{ $json.oldestHours }} h). The batch evaluation workflow is probably not running.</p><ul>{{ $json.listHtml }}</ul><p style=\"background:#FEF3C7;padding:12px;border-radius:8px;\"><b>Check:</b> is Workflow 2 active? Did its last executions fail? Is the n8n server running? Then click <b>Run Batch Now</b>.</p><p style=\"color:#6b7280;font-size:13px;\">This check runs every 2 hours and reminds you until the queue moves.</p></td></tr><tr><td style=\"padding:14px 32px;background:#f9fafb;color:#9ca3af;font-size:12px;text-align:center;\">Horizon Byte Solutions &middot; Automation Monitoring</td></tr></table></div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "77cd3364-fd71-4bce-81b6-eb6102dc9088",
+      "name": "Heartbeat Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        480
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_ERROR_LOG_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 2127425649,
+          "cachedResultName": "Untitled",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_ERROR_LOG_SHEET_ID/edit#gid=2127425649"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Time": "={{ $('Find Stuck Applications').first().json.time }}",
+            "Workflow": "Recruitment 2 - Batch Evaluation (AI Screening)",
+            "Node": "Heartbeat",
+            "Type": "heartbeat",
+            "Severity": "critical",
+            "Message": "={{ $('Find Stuck Applications').first().json.stuckCount }} applications waiting more than 3 hours",
+            "Suggested Fix": "Check that Workflow 2 is active and its last executions succeeded, then run the batch.",
+            "Fingerprint": "Recruitment 2 - Batch Evaluation (AI Screening) | Heartbeat | heartbeat",
+            "Epoch Minute": "={{ $('Find Stuck Applications').first().json.epochMinute }}",
+            "Alerted": "yes",
+            "Status": "open"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Time",
+              "displayName": "Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Node",
+              "displayName": "Node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Suggested Fix",
+              "displayName": "Suggested Fix",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Execution Link",
+              "displayName": "Execution Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fingerprint",
+              "displayName": "Fingerprint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Epoch Minute",
+              "displayName": "Epoch Minute",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Alerted",
+              "displayName": "Alerted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a32e424f-b7e7-41b5-b243-839a25df3c93",
+      "name": "Log Heartbeat",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1104,
+        480
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On Workflow Error": {
+      "main": [
+        [
+          {
+            "node": "Classify Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Error": {
+      "main": [
+        [
+          {
+            "node": "Get Recent Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recent Alerts": {
+      "main": [
+        [
+          {
+            "node": "Check Throttle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Throttle": {
+      "main": [
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error": {
+      "main": [
+        [
+          {
+            "node": "Alert Now?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Now?": {
+      "main": [
+        [
+          {
+            "node": "Alert Admin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Every Morning 8 AM": {
+      "main": [
+        [
+          {
+            "node": "Get Error Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Error Log": {
+      "main": [
+        [
+          {
+            "node": "Build Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Digest": {
+      "main": [
+        [
+          {
+            "node": "Anything to Report?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anything to Report?": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Digest",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Every 2 Hours": {
+      "main": [
+        [
+          {
+            "node": "Get Waiting Applications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Waiting Applications": {
+      "main": [
+        [
+          {
+            "node": "Find Stuck Applications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Stuck Applications": {
+      "main": [
+        [
+          {
+            "node": "Queue Stuck?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Queue Stuck?": {
+      "main": [
+        [
+          {
+            "node": "Heartbeat Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Heartbeat Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Heartbeat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timezone": "Africa/Cairo"
+  },
+  "nodeGroups": [],
+  "tags": []
+}
